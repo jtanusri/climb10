@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-muli);
+
+  /* Primary Purple - #46003F */
+  --color-plum-50: #fdf5fc;
+  --color-plum-100: #f5e0f2;
+  --color-plum-200: #ebc2e5;
+  --color-plum-300: #d994d0;
+  --color-plum-400: #c060b3;
+  --color-plum-500: #993392;
+  --color-plum-600: #76196f;
+  --color-plum-700: #5c0d56;
+  --color-plum-800: #46003f;
+  --color-plum-900: #380033;
+  --color-plum-950: #240022;
+
+  /* Accent Blue - #00ADEF */
+  --color-ocean-50: #e6f7ff;
+  --color-ocean-100: #b3e7ff;
+  --color-ocean-200: #80d6ff;
+  --color-ocean-300: #4dc6ff;
+  --color-ocean-400: #1ab6ff;
+  --color-ocean-500: #00ADEF;
+  --color-ocean-600: #008bc0;
+  --color-ocean-700: #006a92;
+  --color-ocean-800: #004963;
+  --color-ocean-900: #002835;
+  --color-ocean-950: #001a24;
+
+  /* Accent Green - #BCDE2E */
+  --color-lime-50: #f8fce8;
+  --color-lime-100: #eef7c1;
+  --color-lime-200: #e2f299;
+  --color-lime-300: #d4eb6a;
+  --color-lime-400: #BCDE2E;
+  --color-lime-500: #a5c726;
+  --color-lime-600: #89a61f;
+  --color-lime-700: #6d8518;
+  --color-lime-800: #516411;
+  --color-lime-900: #35430a;
+  --color-lime-950: #1a2205;
+
+  /* Silver Gradient - #c4c6c8 → #b1b3b5 → #9ea0a3 */
+  --color-silver-50: #f8f9fa;
+  --color-silver-100: #f1f3f5;
+  --color-silver-200: #e5e7e9;
+  --color-silver-300: #c4c6c8;
+  --color-silver-400: #b1b3b5;
+  --color-silver-500: #9ea0a3;
+  --color-silver-600: #7d7f82;
+  --color-silver-700: #5c5e61;
+  --color-silver-800: #3b3d40;
+  --color-silver-900: #1a1c1f;
+  --color-silver-950: #0d0e10;
+}
+
+:root {
+  --background: #fdf5fc;
+  --foreground: #1a1c1f;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), 'Mulish', Arial, Helvetica, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-silver-300);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-silver-400);
+}
