@@ -39,41 +39,11 @@ export default function BriefPage() {
     };
   });
 
-  // Prepare map orgs with deterministic jitter for co-located markers
-  const jitterOffsets = [
-    [0, 0], [0.04, 0.03], [-0.03, 0.05], [0.05, -0.04],
-    [-0.05, -0.02], [0.02, 0.06], [-0.06, 0.01], [0.01, -0.06],
-  ];
-  const seenCoords = new Map<string, number>();
-  const mapOrgs = orgs
-    .filter(o => o.lat && o.lng)
-    .map(o => {
-      const key = `${o.lat!.toFixed(3)},${o.lng!.toFixed(3)}`;
-      const count = seenCoords.get(key) || 0;
-      seenCoords.set(key, count + 1);
-      const offset = count > 0 ? (jitterOffsets[count % jitterOffsets.length]) : [0, 0];
-      return {
-        id: o.id,
-        name: o.name,
-        location: o.location,
-        estimated_budget: o.estimated_budget,
-        mission_focus: o.mission_focus,
-        stage: o.stage,
-        keyword_category: o.keyword_category || 'sector',
-        signal_strength: o.signal_strength || 'strong',
-        leadership_signal_tier: o.leadership_signal_tier,
-        lat: o.lat! + offset[0],
-        lng: o.lng! + offset[1],
-      };
-    });
-
   return (
     <BriefHub
       initialBrief={brief}
-      hasBrief={!!brief}
       pastRuns={runs}
       pipelineLeads={pipelineLeads}
-      mapOrgs={mapOrgs}
     />
   );
 }

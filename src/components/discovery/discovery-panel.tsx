@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Loader2, AlertCircle, ChevronDown, ChevronUp, MapPin, Filter, User, Mail, Linkedin, ExternalLink, Shield, DollarSign, FileText } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Loader2, AlertCircle, ChevronDown, ChevronUp, MapPin, Filter, User, Mail, Linkedin, ExternalLink, Shield, DollarSign, FileText, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import OrgDiscoveryCard from './org-discovery-card';
-import type { DiscoveryRun, LeadershipSignalTier } from '@/lib/db/types';
+import type { Brief, DiscoveryRun, LeadershipSignalTier } from '@/lib/db/types';
 import { SIGNAL_TIER_DISPLAY, BUDGET_TIERS, getBudgetTier } from '@/lib/db/types';
 import { parseBudgetToMillions } from '@/lib/utils/budget';
 import type { PipelineLead } from '../brief/brief-hub';
@@ -52,24 +52,67 @@ const stageLabels: Record<string, string> = {
 };
 
 interface Props {
-  hasBrief: boolean;
+  initialBrief: Brief | null;
   pastRuns: DiscoveryRun[];
   pipelineLeads?: PipelineLead[];
 }
 
-export default function DiscoveryPanel({ hasBrief, pastRuns, pipelineLeads = [] }: Props) {
+export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads = [] }: Props) {
+  const [geography, setGeography] = useState(initialBrief?.geography || 'Halifax, Nova Scotia');
+  const [radiusMiles, setRadiusMiles] = useState(initialBrief?.radius_miles || 15);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<DiscoveryResult[]>([]);
   const [error, setError] = useState('');
   const [showHistory, setShowHistory] = useState(false);
-  const [radiusMiles, setRadiusMiles] = useState(15);
   const [tierFilter, setTierFilter] = useState<LeadershipSignalTier | 'all'>('all');
+  const [briefSaved, setBriefSaved] = useState(false);
+
+  const isInitialMount = useRef(true);
+  const debounceRef = useRef<NodeJS.Timeout>(undefined);
+
+  // Auto-save brief when geography or radius changes (debounced)
+  const saveBrief = useCallback(async (geo: string, radius: number) => {
+    try {
+      await fetch('/api/brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ geography: geo, radius_miles: radius }),
+      });
+      setBriefSaved(true);
+      setTimeout(() => setBriefSaved(false), 2000);
+    } catch {
+      // Silent fail — brief will be force-saved before discovery
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => saveBrief(geography, radiusMiles), 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [geography, radiusMiles, saveBrief]);
 
   const runDiscovery = async () => {
     setLoading(true);
     setError('');
     setResults([]);
+
+    // Force-save brief immediately before discovery (bypass debounce)
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    try {
+      await fetch('/api/brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ geography, radius_miles: radiusMiles }),
+      });
+    } catch {
+      // Continue with discovery even if brief save fails
+    }
+
     try {
       const res = await fetch('/api/discover', {
         method: 'POST',
@@ -97,70 +140,40 @@ export default function DiscoveryPanel({ hasBrief, pastRuns, pipelineLeads = [] 
     ? pipelineLeads
     : pipelineLeads.filter(l => l.leadership_signal_tier === tierFilter);
 
-  if (!hasBrief) {
-    return (
-      <div className="max-w-2xl mx-auto text-center py-16">
-        <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 inline-block mb-4">
-          <AlertCircle className="w-8 h-8 text-amber-500" />
-        </div>
-        <h2 className="text-xl font-semibold text-silver-900 mb-2">Complete Your Brief First</h2>
-        <p className="text-silver-600 mb-4">
-          The discovery AI needs your advisory brief to find matching organizations.
-        </p>
-        <Link
-          href="/brief"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-plum-800 text-white rounded-lg hover:bg-plum-700 transition-colors"
-        >
-          Set Up Brief
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      {/* Search Controls */}
+      {/* Search Controls — unified top bar */}
       <div className="bg-white rounded-xl border border-silver-200 p-6">
-        <h2 className="text-lg font-semibold text-silver-900 mb-3">AI-Powered Organization Discovery</h2>
-        <p className="text-sm text-silver-600 mb-4">
-          Searches the web for real ocean-focused organizations matching your brief. Budget and headcount are displayed for sorting — not used as hard filters.
-        </p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !loading && runDiscovery()}
-            placeholder='e.g. "ocean technology Halifax" or "blue economy Nova Scotia"'
-            className="flex-1 px-4 py-2.5 border border-silver-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-transparent text-sm"
-          />
-          <button
-            onClick={runDiscovery}
-            disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 disabled:opacity-50 transition-colors font-medium"
-          >
-            {loading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Searching...</>
-            ) : (
-              <><Search className="w-4 h-4" /> Run Discovery</>
-            )}
-          </button>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-lg font-semibold text-silver-900">Organization Discovery</h2>
+          {briefSaved && (
+            <span className="flex items-center gap-1 text-xs text-green-600">
+              <CheckCircle className="w-3.5 h-3.5" /> Saved
+            </span>
+          )}
         </div>
 
-        {/* Geography Radius */}
-        <div className="mt-4 flex items-center gap-3 p-3 bg-ocean-50 rounded-lg border border-ocean-100">
+        {/* Geography + Radius row */}
+        <div className="flex items-center gap-3 mb-4 p-3 bg-ocean-50 rounded-lg border border-ocean-100">
           <MapPin className="w-4 h-4 text-ocean-600 flex-shrink-0" />
-          <span className="text-sm text-silver-700">Search within</span>
+          <input
+            type="text"
+            value={geography}
+            onChange={e => setGeography(e.target.value)}
+            placeholder="Halifax, Nova Scotia"
+            className="flex-1 px-3 py-1.5 border border-ocean-200 rounded text-sm bg-white focus:ring-2 focus:ring-ocean-500 focus:border-transparent"
+          />
+          <span className="text-sm text-silver-600">within</span>
           <input
             type="number"
             min={5}
             max={100}
             value={radiusMiles}
             onChange={e => setRadiusMiles(Number(e.target.value))}
-            className="w-16 px-2 py-1 border border-ocean-200 rounded text-sm text-center bg-white"
+            className="w-16 px-2 py-1.5 border border-ocean-200 rounded text-sm text-center bg-white"
           />
-          <span className="text-sm text-silver-700">miles of the brief&apos;s geography</span>
-          <div className="ml-auto flex gap-1">
+          <span className="text-sm text-silver-600">mi</span>
+          <div className="flex gap-1">
             {[15, 25, 50].map(r => (
               <button
                 key={r}
@@ -175,6 +188,29 @@ export default function DiscoveryPanel({ hasBrief, pastRuns, pipelineLeads = [] 
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Query + Run button row */}
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !loading && runDiscovery()}
+            placeholder='e.g. "ocean technology" or "blue economy"'
+            className="flex-1 px-4 py-2.5 border border-silver-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-transparent text-sm"
+          />
+          <button
+            onClick={runDiscovery}
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-2.5 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 disabled:opacity-50 transition-colors font-medium"
+          >
+            {loading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Searching...</>
+            ) : (
+              <><Search className="w-4 h-4" /> Run Discovery</>
+            )}
+          </button>
         </div>
       </div>
 
@@ -225,7 +261,7 @@ export default function DiscoveryPanel({ hasBrief, pastRuns, pipelineLeads = [] 
       {loading && (
         <div className="text-center py-12">
           <Loader2 className="w-10 h-10 animate-spin text-ocean-500 mx-auto mb-4" />
-          <p className="text-silver-600">Searching ocean organizations near Halifax...</p>
+          <p className="text-silver-600">Searching ocean organizations near {geography}...</p>
           <p className="text-sm text-silver-400 mt-1">This may take 20-40 seconds</p>
         </div>
       )}

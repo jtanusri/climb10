@@ -185,7 +185,7 @@ Return your results as a JSON array with this exact structure. Include both orga
 ]
 
 FIELD NOTES:
-- keyword_category: one of "sector", "infra", "econ", "sci", "gov" — which cluster best describes this org
+- keyword_category: one of "sector", "infra", "econ", "sci", "gov", "cons", "food" — which cluster best describes this org. Use "cons" for conservation/sustainability orgs. Use "food" for aquaculture, seafood supply chain, and blue food orgs.
 - signal_strength: one of "high", "strong", "supplemental", "careful" — how strong a lead for Leslie
 - leadership_signal_tier: one of "confirmed", "inferred", "unknown" — evidence quality for leadership challenge
 - leadership_signal_evidence: 1-3 sentences describing specific evidence or standard 'insufficient data' note

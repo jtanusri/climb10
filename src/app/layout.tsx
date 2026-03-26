@@ -23,7 +23,7 @@ export default function RootLayout({
       lang="en"
       className={`${muli.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

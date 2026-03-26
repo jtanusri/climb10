@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   FileText,
+  MapIcon,
   Kanban,
   Mail,
   BookOpen,
@@ -17,6 +18,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/brief', label: 'Brief & Discovery', icon: FileText },
+  { href: '/map', label: 'Map', icon: MapIcon },
   { href: '/pipeline', label: 'Pipeline', icon: Kanban },
   { href: '/outreach', label: 'Outreach Studio', icon: Mail },
   { href: '/briefing', label: 'Briefing Notes', icon: BookOpen },

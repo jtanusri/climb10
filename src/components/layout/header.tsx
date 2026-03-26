@@ -10,7 +10,7 @@ const pageTitles: Record<string, string> = {
   '/': 'Dashboard',
   '/brief': 'Brief & Discovery',
   '/discovery': 'Brief & Discovery',
-  '/map': 'Brief & Discovery',
+  '/map': 'Map',
   '/pipeline': 'Pipeline',
   '/outreach': 'Outreach Studio',
   '/briefing': 'Briefing Notes',

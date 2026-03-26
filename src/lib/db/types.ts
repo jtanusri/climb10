@@ -50,7 +50,7 @@ export function getBudgetTierDisplay(tier: BudgetTier) {
 }
 
 // Keyword categories for map visualization
-export type KeywordCategory = 'sector' | 'infra' | 'econ' | 'sci' | 'gov';
+export type KeywordCategory = 'sector' | 'infra' | 'econ' | 'sci' | 'gov' | 'cons' | 'food';
 
 export const KEYWORD_CATEGORIES: { value: KeywordCategory; label: string; color: string }[] = [
   { value: 'sector', label: 'Sector Synonyms', color: '#1D9E75' },
@@ -58,6 +58,8 @@ export const KEYWORD_CATEGORIES: { value: KeywordCategory; label: string; color:
   { value: 'econ', label: 'Economic Framing', color: '#BA7517' },
   { value: 'sci', label: 'Scientific / Technical', color: '#534AB7' },
   { value: 'gov', label: 'Governance / Policy', color: '#993C1D' },
+  { value: 'cons', label: 'Conservation / Sustainability', color: '#0E7C5A' },
+  { value: 'food', label: 'Food Systems', color: '#D06B18' },
 ];
 
 // Signal strength for map marker sizing

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(xargs kill:*)",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT name, keyword_category, signal_strength FROM organizations WHERE name LIKE ''%Acadian%'';\")",
+      "Bash(pandoc --track-changes=all /Users/maheshjammalamadaka/Downloads/Climb10_PRD_v1.7.docx -o /tmp/climb10_prd.md)",
+      "Bash(brew list:*)",
+      "Bash(brew install:*)",
+      "Bash(pandoc /Users/maheshjammalamadaka/Downloads/Climb10_PRD_v1.7.docx -o /tmp/climb10_prd.md)",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT keyword_category, COUNT\\(*\\) as cnt FROM organizations GROUP BY keyword_category ORDER BY cnt DESC;\")",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT name, keyword_category, signal_strength FROM organizations ORDER BY keyword_category, name;\")",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT name FROM organizations ORDER BY name;\")",
+      "Bash(ls -la /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/public/*.png)",
+      "Bash(node -e \":*)",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"UPDATE organizations SET keyword_category = ''food'' WHERE name = ''Acadian Seaplants Limited''; SELECT name, keyword_category FROM organizations WHERE name LIKE ''%Acadian%'';\")",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT id, name, lat, lng FROM organizations WHERE lat IS NULL OR lng IS NULL OR lat = 0 OR lng = 0;\")",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT COUNT\\(*\\) as total FROM organizations; SELECT id, name, lat, lng, keyword_category FROM organizations ORDER BY id;\")",
+      "Bash(grep -l \"GEMINI\\\\|GOOGLE.*API\" /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)",
+      "Bash(grep \"GEMINI\\\\|GOOGLE.*API\" /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)",
+      "Bash(ls -a /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)"
+    ]
+  }
+}
