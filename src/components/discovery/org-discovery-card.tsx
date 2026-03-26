@@ -52,7 +52,7 @@ export default function OrgDiscoveryCard({ org }: { org: DiscoveryResult }) {
   const addToPipeline = async () => {
     setAdding(true);
     try {
-      await fetch('/api/organizations', {
+      const res = await fetch('/api/organizations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
