@@ -129,7 +129,7 @@ export async function runDiscovery(
     return (tierOrder[a.leadership_signal_tier] ?? 2) - (tierOrder[b.leadership_signal_tier] ?? 2);
   });
 
-  const run = createDiscoveryRun({
+  const run = await createDiscoveryRun({
     brief_id: brief.id,
     query: customQuery || `Default search for ${brief.geography}`,
     prompt_used: prompt,

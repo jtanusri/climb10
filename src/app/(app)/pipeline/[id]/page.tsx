@@ -1,3 +1,4 @@
+import { ensureMigrations } from '@/lib/db';
 import { getOrgById } from '@/lib/db/organizations';
 import { getContactsByOrg } from '@/lib/db/contacts';
 import { getNotesByOrg } from '@/lib/db/notes';
@@ -9,12 +10,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function OrgDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const org = getOrgById(Number(id));
+  await ensureMigrations();
+  const org = await getOrgById(Number(id));
   if (!org) notFound();
 
-  const contacts = getContactsByOrg(org.id);
-  const notes = getNotesByOrg(org.id);
-  const drafts = getDraftsByOrg(org.id);
+  const contacts = await getContactsByOrg(org.id);
+  const notes = await getNotesByOrg(org.id);
+  const drafts = await getDraftsByOrg(org.id);
 
   return <OrgDetail org={org} contacts={contacts} notes={notes} drafts={drafts} />;
 }

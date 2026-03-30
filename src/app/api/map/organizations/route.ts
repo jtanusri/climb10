@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
+import { ensureMigrations } from '@/lib/db';
 import { getAllOrgs } from '@/lib/db/organizations';
 import { updateOrgCoordinates } from '@/lib/db/organizations';
 
 export async function GET(request: Request) {
+  await ensureMigrations();
   const { searchParams } = new URL(request.url);
   const cat = searchParams.get('cat');
   const sig = searchParams.get('sig');
 
-  let orgs = getAllOrgs();
+  let orgs = await getAllOrgs();
 
   if (cat) {
     orgs = orgs.filter(o => o.keyword_category === cat);
@@ -35,12 +37,13 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  await ensureMigrations();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
   const { lat, lng } = await request.json();
-  const org = updateOrgCoordinates(Number(id), lat, lng);
+  const org = await updateOrgCoordinates(Number(id), lat, lng);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   return NextResponse.json(org);

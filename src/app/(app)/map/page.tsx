@@ -1,10 +1,12 @@
+import { ensureMigrations } from '@/lib/db';
 import { getAllOrgs } from '@/lib/db/organizations';
 import DiscoveryMap from '@/components/map/discovery-map';
 
 export const dynamic = 'force-dynamic';
 
-export default function MapPage() {
-  const orgs = getAllOrgs();
+export default async function MapPage() {
+  await ensureMigrations();
+  const orgs = await getAllOrgs();
 
   // Prepare map orgs with deterministic jitter for co-located markers
   // ~0.001° ≈ 100m — enough to separate overlapping pins without displacing them

@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
+import { ensureMigrations } from '@/lib/db';
 import { getAllOrgs, createOrg, getOrgsByStage } from '@/lib/db/organizations';
 import { createContact } from '@/lib/db/contacts';
 import { createNote } from '@/lib/db/notes';
 import type { PipelineStage } from '@/lib/db/types';
 
 export async function GET(request: Request) {
+  await ensureMigrations();
   const { searchParams } = new URL(request.url);
   const stage = searchParams.get('stage') as PipelineStage | null;
 
-  const orgs = stage ? getOrgsByStage(stage) : getAllOrgs();
+  const orgs = stage ? await getOrgsByStage(stage) : await getAllOrgs();
   return NextResponse.json(orgs);
 }
 
@@ -20,8 +22,9 @@ export async function POST(request: Request) {
     ...orgData
   } = data;
 
+  await ensureMigrations();
   // Duplicate check — fuzzy match on org name
-  const existingOrgs = getAllOrgs();
+  const existingOrgs = await getAllOrgs();
   const newNameLower = (orgData.name || '').toLowerCase().trim();
   const duplicate = existingOrgs.find(o => {
     const existingLower = o.name.toLowerCase().trim();
@@ -36,11 +39,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const org = createOrg(orgData);
+  const org = await createOrg(orgData);
 
   // Auto-create contact from lead fields if provided
   if (contact_name) {
-    createContact({
+    await createContact({
       organization_id: org.id,
       contact_name,
       contact_email: contact_email || '',
@@ -59,7 +62,7 @@ export async function POST(request: Request) {
       host_producer_notes ? `Notes: ${host_producer_notes}` : '',
       org.leadership_signal_evidence ? `Leadership Signal: ${org.leadership_signal_evidence}` : '',
     ].filter(Boolean).join('\n');
-    createNote({
+    await createNote({
       organization_id: org.id,
       type: 'qualification',
       content: noteContent,

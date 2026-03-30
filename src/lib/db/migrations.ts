@@ -1,8 +1,8 @@
-import Database from 'better-sqlite3';
+import type { Client } from '@libsql/client';
 
-export function runMigrations(db: Database.Database) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS brief (
+export async function runMigrations(db: Client) {
+  await db.batch([
+    `CREATE TABLE IF NOT EXISTS brief (
       id INTEGER PRIMARY KEY DEFAULT 1,
       geography TEXT DEFAULT 'Halifax, Nova Scotia',
       radius_miles INTEGER DEFAULT 15,
@@ -19,9 +19,20 @@ export function runMigrations(db: Database.Database) {
       win_win_win_criteria TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS organizations (
+    )`,
+    `CREATE TABLE IF NOT EXISTS discovery_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      brief_id INTEGER,
+      query TEXT DEFAULT '',
+      prompt_used TEXT DEFAULT '',
+      raw_response TEXT DEFAULT '',
+      results_json TEXT DEFAULT '[]',
+      result_count INTEGER DEFAULT 0,
+      orgs_added_to_pipeline INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (brief_id) REFERENCES brief(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS organizations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       location TEXT DEFAULT '',
@@ -41,9 +52,8 @@ export function runMigrations(db: Database.Database) {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (discovery_run_id) REFERENCES discovery_runs(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS contacts (
+    )`,
+    `CREATE TABLE IF NOT EXISTS contacts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       organization_id INTEGER NOT NULL,
       contact_name TEXT NOT NULL,
@@ -56,18 +66,16 @@ export function runMigrations(db: Database.Database) {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS notes (
+    )`,
+    `CREATE TABLE IF NOT EXISTS notes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       organization_id INTEGER NOT NULL,
       type TEXT NOT NULL DEFAULT 'general',
       content TEXT NOT NULL,
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS outreach_drafts (
+    )`,
+    `CREATE TABLE IF NOT EXISTS outreach_drafts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       organization_id INTEGER NOT NULL,
       contact_id INTEGER,
@@ -79,22 +87,8 @@ export function runMigrations(db: Database.Database) {
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
       FOREIGN KEY (contact_id) REFERENCES contacts(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS discovery_runs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      brief_id INTEGER,
-      query TEXT DEFAULT '',
-      prompt_used TEXT DEFAULT '',
-      raw_response TEXT DEFAULT '',
-      results_json TEXT DEFAULT '[]',
-      result_count INTEGER DEFAULT 0,
-      orgs_added_to_pipeline INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (brief_id) REFERENCES brief(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS stage_transitions (
+    )`,
+    `CREATE TABLE IF NOT EXISTS stage_transitions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       organization_id INTEGER NOT NULL,
       from_stage TEXT,
@@ -102,9 +96,8 @@ export function runMigrations(db: Database.Database) {
       note TEXT DEFAULT '',
       transitioned_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-    );
-
-    CREATE TABLE IF NOT EXISTS follow_up_reminders (
+    )`,
+    `CREATE TABLE IF NOT EXISTS follow_up_reminders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       organization_id INTEGER NOT NULL,
       due_date TEXT NOT NULL,
@@ -113,6 +106,6 @@ export function runMigrations(db: Database.Database) {
       completed_at TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-    );
-  `);
+    )`,
+  ], 'write');
 }

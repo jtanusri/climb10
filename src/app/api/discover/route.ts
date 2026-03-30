@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { ensureMigrations } from '@/lib/db';
 import { getBrief } from '@/lib/db/brief';
 import { runDiscovery } from '@/lib/ai/discovery';
 
 export async function POST(request: Request) {
+  await ensureMigrations();
   try {
-    const brief = getBrief();
+    const brief = await getBrief();
     if (!brief) {
       return NextResponse.json({ error: 'Please complete your advisory brief first.' }, { status: 400 });
     }

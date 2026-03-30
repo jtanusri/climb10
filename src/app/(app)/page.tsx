@@ -1,3 +1,4 @@
+import { ensureMigrations } from '@/lib/db';
 import { getAllOrgs } from '@/lib/db/organizations';
 import { getBrief } from '@/lib/db/brief';
 import { getActiveReminders } from '@/lib/db/reminders';
@@ -8,11 +9,12 @@ import { Search, FileText, ArrowRight, Bell, AlertCircle } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-export default function Dashboard() {
-  const orgs = getAllOrgs();
-  const brief = getBrief();
-  const reminders = getActiveReminders();
-  const activity = getRecentActivity(8);
+export default async function Dashboard() {
+  await ensureMigrations();
+  const orgs = await getAllOrgs();
+  const brief = await getBrief();
+  const reminders = await getActiveReminders();
+  const activity = await getRecentActivity(8);
 
   const stageCounts = PIPELINE_STAGES.map(s => ({
     ...s,

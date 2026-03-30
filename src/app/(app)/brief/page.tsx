@@ -1,3 +1,4 @@
+import { ensureMigrations } from '@/lib/db';
 import { getBrief } from '@/lib/db/brief';
 import { getDiscoveryRuns } from '@/lib/db/discovery';
 import { getAllOrgs } from '@/lib/db/organizations';
@@ -6,14 +7,15 @@ import BriefHub from '@/components/brief/brief-hub';
 
 export const dynamic = 'force-dynamic';
 
-export default function BriefPage() {
-  const brief = getBrief();
-  const runs = getDiscoveryRuns();
-  const orgs = getAllOrgs();
+export default async function BriefPage() {
+  await ensureMigrations();
+  const brief = await getBrief();
+  const runs = await getDiscoveryRuns();
+  const orgs = await getAllOrgs();
 
   // Build pipeline leads with contact details
-  const pipelineLeads = orgs.map(o => {
-    const contacts = getContactsByOrg(o.id);
+  const pipelineLeads = await Promise.all(orgs.map(async o => {
+    const contacts = await getContactsByOrg(o.id);
     const primaryContact = contacts[0];
     return {
       id: o.id,
@@ -37,7 +39,7 @@ export default function BriefPage() {
       review_status: primaryContact?.review_status || 'Pending Review',
       host_producer_notes: primaryContact?.host_producer_notes || '',
     };
-  });
+  }));
 
   return (
     <BriefHub

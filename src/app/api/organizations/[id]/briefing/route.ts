@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ensureMigrations } from '@/lib/db';
 import { getOrgById } from '@/lib/db/organizations';
 import { getBrief } from '@/lib/db/brief';
 import { getNotesByOrg } from '@/lib/db/notes';
@@ -6,18 +7,19 @@ import { createNote } from '@/lib/db/notes';
 import { generateBriefingNotes } from '@/lib/ai/briefing';
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  await ensureMigrations();
   const { id } = await params;
   try {
-    const org = getOrgById(Number(id));
+    const org = await getOrgById(Number(id));
     if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
 
-    const brief = getBrief();
+    const brief = await getBrief();
     if (!brief) return NextResponse.json({ error: 'Brief not found' }, { status: 400 });
 
-    const notes = getNotesByOrg(Number(id));
+    const notes = await getNotesByOrg(Number(id));
     const briefingContent = await generateBriefingNotes(brief, org, notes);
 
-    const note = createNote({
+    const note = await createNote({
       organization_id: Number(id),
       type: 'briefing',
       content: briefingContent,

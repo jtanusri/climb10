@@ -21,7 +21,10 @@
       "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db \"SELECT COUNT\\(*\\) as total FROM organizations; SELECT id, name, lat, lng, keyword_category FROM organizations ORDER BY id;\")",
       "Bash(grep -l \"GEMINI\\\\|GOOGLE.*API\" /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)",
       "Bash(grep \"GEMINI\\\\|GOOGLE.*API\" /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)",
-      "Bash(ls -a /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)"
+      "Bash(ls -a /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)",
+      "Bash(npm uninstall:*)",
+      "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db .dump)",
+      "Bash(npm run:*)"
     ]
   }
 }

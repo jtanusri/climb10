@@ -8,10 +8,10 @@ export interface ActivityItem {
   created_at: string;
 }
 
-export function getRecentActivity(limit = 10): ActivityItem[] {
+export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
   const db = getDb();
-  const transitions = db.prepare(`
-    SELECT 'stage_change' as type,
+  const transResult = await db.execute({
+    sql: `SELECT 'stage_change' as type,
       'Moved to ' || st.to_stage as description,
       o.name as org_name,
       o.id as org_id,
@@ -19,11 +19,12 @@ export function getRecentActivity(limit = 10): ActivityItem[] {
     FROM stage_transitions st
     JOIN organizations o ON o.id = st.organization_id
     ORDER BY st.transitioned_at DESC
-    LIMIT ?
-  `).all(limit) as ActivityItem[];
+    LIMIT ?`,
+    args: [limit],
+  });
 
-  const notes = db.prepare(`
-    SELECT 'note' as type,
+  const notesResult = await db.execute({
+    sql: `SELECT 'note' as type,
       n.type || ' note added' as description,
       o.name as org_name,
       o.id as org_id,
@@ -31,8 +32,12 @@ export function getRecentActivity(limit = 10): ActivityItem[] {
     FROM notes n
     JOIN organizations o ON o.id = n.organization_id
     ORDER BY n.created_at DESC
-    LIMIT ?
-  `).all(limit) as ActivityItem[];
+    LIMIT ?`,
+    args: [limit],
+  });
+
+  const transitions = transResult.rows as unknown as ActivityItem[];
+  const notes = notesResult.rows as unknown as ActivityItem[];
 
   return [...transitions, ...notes]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())

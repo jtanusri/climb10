@@ -1,119 +1,110 @@
 import { getDb } from '../db';
 import type { Organization, PipelineStage } from './types';
 
-export function getAllOrgs(): Organization[] {
+export async function getAllOrgs(): Promise<Organization[]> {
   const db = getDb();
-  return db.prepare('SELECT * FROM organizations ORDER BY updated_at DESC').all() as Organization[];
+  const result = await db.execute('SELECT * FROM organizations ORDER BY updated_at DESC');
+  return result.rows as unknown as Organization[];
 }
 
-export function getOrgsByStage(stage: PipelineStage): Organization[] {
+export async function getOrgsByStage(stage: PipelineStage): Promise<Organization[]> {
   const db = getDb();
-  return db.prepare('SELECT * FROM organizations WHERE stage = ? ORDER BY updated_at DESC').all(stage) as Organization[];
+  const result = await db.execute({ sql: 'SELECT * FROM organizations WHERE stage = ? ORDER BY updated_at DESC', args: [stage] });
+  return result.rows as unknown as Organization[];
 }
 
-export function getOrgById(id: number): Organization | null {
+export async function getOrgById(id: number): Promise<Organization | null> {
   const db = getDb();
-  return db.prepare('SELECT * FROM organizations WHERE id = ?').get(id) as Organization | undefined ?? null;
+  const result = await db.execute({ sql: 'SELECT * FROM organizations WHERE id = ?', args: [id] });
+  return (result.rows[0] as unknown as Organization) ?? null;
 }
 
-export function createOrg(data: Partial<Organization>): Organization {
+export async function createOrg(data: Partial<Organization>): Promise<Organization> {
   const db = getDb();
-  const stmt = db.prepare(`
-    INSERT INTO organizations (name, location, website, estimated_size, estimated_budget,
+  const result = await db.execute({
+    sql: `INSERT INTO organizations (name, location, website, estimated_size, estimated_budget,
       mission_focus, why_fit, stage, keyword_category, signal_strength,
       leadership_signal_tier, leadership_signal_evidence, lat, lng, discovery_run_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  const result = stmt.run(
-    data.name ?? '',
-    data.location ?? '',
-    data.website ?? '',
-    data.estimated_size ?? '',
-    data.estimated_budget ?? '',
-    data.mission_focus ?? '',
-    data.why_fit ?? '',
-    data.stage ?? 'identified',
-    data.keyword_category ?? '',
-    data.signal_strength ?? '',
-    data.leadership_signal_tier ?? 'unknown',
-    data.leadership_signal_evidence ?? '',
-    data.lat ?? null,
-    data.lng ?? null,
-    data.discovery_run_id ?? null,
-  );
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      data.name ?? '', data.location ?? '', data.website ?? '',
+      data.estimated_size ?? '', data.estimated_budget ?? '',
+      data.mission_focus ?? '', data.why_fit ?? '',
+      data.stage ?? 'identified', data.keyword_category ?? '',
+      data.signal_strength ?? '', data.leadership_signal_tier ?? 'unknown',
+      data.leadership_signal_evidence ?? '',
+      data.lat ?? null, data.lng ?? null, data.discovery_run_id ?? null,
+    ],
+  });
 
-  // Log initial stage transition
-  db.prepare('INSERT INTO stage_transitions (organization_id, from_stage, to_stage) VALUES (?, NULL, ?)')
-    .run(result.lastInsertRowid, data.stage ?? 'identified');
+  await db.execute({
+    sql: 'INSERT INTO stage_transitions (organization_id, from_stage, to_stage) VALUES (?, NULL, ?)',
+    args: [result.lastInsertRowid!, data.stage ?? 'identified'],
+  });
 
-  return getOrgById(Number(result.lastInsertRowid))!;
+  return (await getOrgById(Number(result.lastInsertRowid)))!;
 }
 
-export function updateOrg(id: number, data: Partial<Organization>): Organization | null {
+export async function updateOrg(id: number, data: Partial<Organization>): Promise<Organization | null> {
   const db = getDb();
-  const org = getOrgById(id);
+  const org = await getOrgById(id);
   if (!org) return null;
 
-  const stmt = db.prepare(`
-    UPDATE organizations SET
+  await db.execute({
+    sql: `UPDATE organizations SET
       name = ?, location = ?, website = ?, estimated_size = ?,
       estimated_budget = ?, mission_focus = ?, why_fit = ?,
       keyword_category = ?, signal_strength = ?,
       leadership_signal_tier = ?, leadership_signal_evidence = ?,
       lat = ?, lng = ?, updated_at = datetime('now')
-    WHERE id = ?
-  `);
-  stmt.run(
-    data.name ?? org.name,
-    data.location ?? org.location,
-    data.website ?? org.website,
-    data.estimated_size ?? org.estimated_size,
-    data.estimated_budget ?? org.estimated_budget,
-    data.mission_focus ?? org.mission_focus,
-    data.why_fit ?? org.why_fit,
-    data.keyword_category ?? org.keyword_category,
-    data.signal_strength ?? org.signal_strength,
-    data.leadership_signal_tier ?? org.leadership_signal_tier,
-    data.leadership_signal_evidence ?? org.leadership_signal_evidence,
-    data.lat ?? org.lat,
-    data.lng ?? org.lng,
-    id,
-  );
+    WHERE id = ?`,
+    args: [
+      data.name ?? org.name, data.location ?? org.location,
+      data.website ?? org.website, data.estimated_size ?? org.estimated_size,
+      data.estimated_budget ?? org.estimated_budget,
+      data.mission_focus ?? org.mission_focus, data.why_fit ?? org.why_fit,
+      data.keyword_category ?? org.keyword_category,
+      data.signal_strength ?? org.signal_strength,
+      data.leadership_signal_tier ?? org.leadership_signal_tier,
+      data.leadership_signal_evidence ?? org.leadership_signal_evidence,
+      data.lat ?? org.lat, data.lng ?? org.lng, id,
+    ],
+  });
 
   return getOrgById(id);
 }
 
-export function updateOrgStage(id: number, newStage: PipelineStage, note?: string): Organization | null {
+export async function updateOrgStage(id: number, newStage: PipelineStage, note?: string): Promise<Organization | null> {
   const db = getDb();
-  const org = getOrgById(id);
+  const org = await getOrgById(id);
   if (!org) return null;
 
-  db.prepare('UPDATE organizations SET stage = ?, updated_at = datetime(\'now\') WHERE id = ?')
-    .run(newStage, id);
+  await db.execute({ sql: "UPDATE organizations SET stage = ?, updated_at = datetime('now') WHERE id = ?", args: [newStage, id] });
+  await db.execute({
+    sql: 'INSERT INTO stage_transitions (organization_id, from_stage, to_stage, note) VALUES (?, ?, ?, ?)',
+    args: [id, org.stage, newStage, note ?? ''],
+  });
 
-  db.prepare('INSERT INTO stage_transitions (organization_id, from_stage, to_stage, note) VALUES (?, ?, ?, ?)')
-    .run(id, org.stage, newStage, note ?? '');
-
-  // Auto-create follow-up reminder when outreach is sent
   if (newStage === 'outreach_sent') {
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + 14);
-    db.prepare('INSERT INTO follow_up_reminders (organization_id, due_date, note) VALUES (?, ?, ?)')
-      .run(id, dueDate.toISOString().split('T')[0], '14-day follow-up after outreach sent');
+    await db.execute({
+      sql: 'INSERT INTO follow_up_reminders (organization_id, due_date, note) VALUES (?, ?, ?)',
+      args: [id, dueDate.toISOString().split('T')[0], '14-day follow-up after outreach sent'],
+    });
   }
 
   return getOrgById(id);
 }
 
-export function updateOrgCoordinates(id: number, lat: number, lng: number): Organization | null {
+export async function updateOrgCoordinates(id: number, lat: number, lng: number): Promise<Organization | null> {
   const db = getDb();
-  db.prepare('UPDATE organizations SET lat = ?, lng = ?, updated_at = datetime(\'now\') WHERE id = ?')
-    .run(lat, lng, id);
+  await db.execute({ sql: "UPDATE organizations SET lat = ?, lng = ?, updated_at = datetime('now') WHERE id = ?", args: [lat, lng, id] });
   return getOrgById(id);
 }
 
-export function deleteOrg(id: number): boolean {
+export async function deleteOrg(id: number): Promise<boolean> {
   const db = getDb();
-  const result = db.prepare('DELETE FROM organizations WHERE id = ?').run(id);
-  return result.changes > 0;
+  const result = await db.execute({ sql: 'DELETE FROM organizations WHERE id = ?', args: [id] });
+  return result.rowsAffected > 0;
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { ensureMigrations } from '@/lib/db';
 import { getDraftsByOrg, createDraft } from '@/lib/db/outreach';
 import { getOrgById } from '@/lib/db/organizations';
 import { getContactsByOrg } from '@/lib/db/contacts';
@@ -6,21 +7,23 @@ import { getBrief } from '@/lib/db/brief';
 import { generateOutreachDraft } from '@/lib/ai/outreach';
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  await ensureMigrations();
   const { id } = await params;
-  const drafts = getDraftsByOrg(Number(id));
+  const drafts = await getDraftsByOrg(Number(id));
   return NextResponse.json(drafts);
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  await ensureMigrations();
   const { id } = await params;
   try {
-    const org = getOrgById(Number(id));
+    const org = await getOrgById(Number(id));
     if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
 
-    const brief = getBrief();
+    const brief = await getBrief();
     if (!brief) return NextResponse.json({ error: 'Brief not found' }, { status: 400 });
 
-    const contacts = getContactsByOrg(Number(id));
+    const contacts = await getContactsByOrg(Number(id));
     const body = await request.json();
 
     // Use the first contact or provided contact info
@@ -42,7 +45,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       bodyText = lines.slice(1).join('\n').trim();
     }
 
-    const draft = createDraft({
+    const draft = await createDraft({
       organization_id: Number(id),
       contact_id: primaryContact?.id ?? undefined,
       subject_line: subjectLine,
