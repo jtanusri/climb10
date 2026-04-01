@@ -33,7 +33,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+      "WebFetch(domain:inspiring-semolina-3f2762.netlify.app)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS: %{http_code}\\\\nTIME_TOTAL: %{time_total}s\\\\n\" -X POST https://inspiring-semolina-3f2762.netlify.app/api/discover -H \"Content-Type: application/json\" -d '{\"\"query\"\":\"\"ocean technology\"\",\"\"radiusMiles\"\":15}' --max-time 90)",
+      "Bash(npm ls:*)",
+      "Bash(pkill -f 'next dev')"
     ]
   }
 }
