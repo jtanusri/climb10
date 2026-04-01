@@ -41,7 +41,9 @@ export function buildDiscoveryPrompt(brief: Brief, customQuery?: string, radiusM
   // Block 9: Output format spec
   // Block 10: Count and quality instruction
 
-  return `You are a senior research analyst supporting a leadership advisor who is seeking a 6-8 week Entrepreneurship in Residence placement in Halifax, Nova Scotia. Your task is to find real, qualified ocean-focused organizations using web search.
+  const isHalifax = /halifax|nova scotia|atlantic canada/i.test(brief.geography);
+
+  return `You are a senior research analyst supporting a leadership advisor who is seeking a 6-8 week Entrepreneurship in Residence placement in ${brief.geography}. Your task is to find real, qualified ocean-focused organizations using web search.
 
 ${context}
 
@@ -63,24 +65,24 @@ HARD FILTERS — Qualitative Exclusions Only:
 KEYWORD SEARCH STRATEGY — Two-Axis Search:
 Search for organizations using ANY of these sector terms:
 
-PRIMARY (Sector Synonyms): ocean, marine, maritime, blue economy, oceanographic, offshore wind, subsea, coastal
+PRIMARY (Sector Synonyms): ocean, marine, maritime, blue economy, oceanographic, offshore wind, subsea, coastal, bluetech
 
-ECONOMIC FRAMING: blue finance, ocean economy, marine commerce, ocean investment, investing in ocean, ocean-focused fund, marine investment, ocean venture, sustainable seafood investment, coastal economy investment, ocean-focused accelerator
+ECONOMIC FRAMING: blue finance, ocean economy, marine commerce, ocean investment, investing in ocean, ocean-focused fund, marine investment, ocean venture, sustainable seafood investment, coastal economy investment, ocean-focused accelerator, blue economy VC, ocean impact investing, ocean impact fund, ocean startup
 
-INFRASTRUCTURE & OPERATIONS: marine infrastructure, offshore wind operations, offshore wind development, shipbuilding, naval architecture, port authority, marine logistics, harbour management, underwater systems, marine engineering
+INFRASTRUCTURE & OPERATIONS: marine infrastructure, offshore wind operations, offshore wind development, tidal energy, wave energy, ocean energy, ocean renewable energy, shipbuilding, naval architecture, port authority, marine logistics, harbour management, underwater systems, marine engineering
 
-SCIENCE & DEEP TECHNOLOGY: ocean technology, oceanography, marine science, AUV, ROV, underwater acoustics, hydrography, bathymetry, ocean intelligence, marine sensing, seabed mapping, ocean data
+SCIENCE & DEEP TECHNOLOGY: ocean technology, oceanography, marine science, AUV, ROV, underwater acoustics, hydrography, bathymetry, ocean intelligence, marine sensing, seabed mapping, ocean data, ocean AI, marine robotics
 
-CONSERVATION & SUSTAINABILITY: ocean stewardship, marine conservation, ocean health, blue carbon, coastal resilience, marine protected areas, ocean sustainability, ocean governance
+CONSERVATION & SUSTAINABILITY: ocean stewardship, marine conservation, ocean health, blue carbon, ocean carbon capture, ocean carbon removal, coastal resilience, marine protected areas, ocean sustainability, ocean governance, ocean climate, marine biomaterials, bioplastic marine
 
 GOVERNANCE & POLICY: marine spatial planning, ocean policy, coastal management, fisheries management (broad-mandate only), marine regulatory, EEZ
 
-FOOD SYSTEMS (handle with care — enforce single-species exclusion): aquaculture (multi-species only), mariculture, sustainable seafood, seafood supply chain, blue food
+FOOD SYSTEMS (handle with care — enforce single-species exclusion): aquaculture (multi-species only), mariculture, sustainable seafood, seafood supply chain, blue food, algae, microalgae, omega-3, marine ingredients, seaweed agriculture, fermented algae
 
 ALSO PRIORITIZE organizations showing these LEADERSHIP SIGNALS:
-founder-led scaling, hypergrowth, cross-sector partnership, strategic transition, joint venture, public-private partnership, multi-stakeholder, organizational alignment, board transition, scaling culture
+founder-led scaling, hypergrowth, cross-sector partnership, strategic transition, joint venture, public-private partnership, multi-stakeholder, organizational alignment, board transition, scaling culture, recent seed/Series A funding round, new CEO/ED appointment, major government contract awarded
 
-GEOGRAPHIC NOTE: Always pair economic/investment terms with Halifax, Nova Scotia, or Atlantic Canada.
+GEOGRAPHIC NOTE: Always pair economic/investment terms with ${brief.geography} and the surrounding region.
 
 LEADERSHIP SIGNAL TIER INSTRUCTION:
 For every organization returned, assess and report a leadership_signal_tier value:
@@ -98,11 +100,11 @@ EXCLUSION RULES (reinforced):
 - No organizations outside ${radius} miles of ${brief.geography}
 - Do NOT confuse 'no public data found' with 'no leadership challenges detected'
 
-HALIFAX OCEAN ECOSYSTEM REFERENCE:
+${isHalifax ? `HALIFAX OCEAN ECOSYSTEM REFERENCE:
 Cross-reference these known Nova Scotia ocean sector organizations when searching. Include them if they meet criteria, and search for additional qualifying organizations beyond this list:
 
 OCEAN TECH & SCIENCE:
-- Kraken Robotics — subsea technology, sonar, AUVs
+- Kraken Robotics — subsea technology, sonar, AUVs ($71.8M raise on TSX)
 - Kongsberg Maritime Canada — maritime sensors and systems
 - GeoSpectrum Technologies — underwater acoustics
 - Innovasea — ocean tracking and aquaculture technology
@@ -114,8 +116,6 @@ OCEAN TECH & SCIENCE:
 - metOcean Telematics — ocean data buoys and telemetry
 - Fugro GeoSurveys — seabed mapping, geophysical survey
 - MDA (MacDonald Dettwiler) — satellite intelligence and earth observation
-- DSM Nutritional Products — marine ingredients/omega-3s
-- Acadian Seaplants — seaweed / marine agriculture
 - Ocean Sonics — hydrophones and marine acoustics
 - MacArtney Underwater Technology — underwater connectors and systems
 - CarteNav Solutions — maritime surveillance software
@@ -125,13 +125,23 @@ OCEAN INFRASTRUCTURE & ENERGY:
 - Irving Shipbuilding — federal shipbuilding ($29.3B contract), Halifax
 - Babcock Canada — naval engineering and ship lifecycle support
 - FORCE (Fundy Ocean Research Centre for Energy) — tidal energy R&D
-- SNC-Lavalin — engineering, ocean infrastructure projects
+- SNC-Lavalin (AtkinsRéalis) — engineering, ocean infrastructure projects
 - ABCO Industries — marine fabrication
+- Voltai — Dartmouth, ocean/renewable energy startup ($1.83M pre-seed, 2025)
 
-DO NOT PURSUE (out of scope):
-- SBM Offshore — oil & gas production systems; enterprise scale
-- ExxonMobil Canada — offshore oil & gas major
-- Shell Canada — offshore energy exploration
+CONSERVATION & CARBON:
+- pHathom Technologies — Halifax, ocean carbon capture ($4M seed Jan 2026, $12M+ committed). 2025 Atlantic Startup of the Year. Selected by Frontier (Stripe/Shopify/Google)
+- Clean Valley CIC — Halifax, algae growth in aquaculture wastewater
+
+FOOD SYSTEMS & MARINE INGREDIENTS:
+- Mara Renewables — Halifax, algae-derived omega-3 DHA (US$9.1M raise 2025, backed by S2G Ventures + Thai Union)
+- Smallfood — fermented algae food ingredients, XPRIZE finalist
+- DSM Nutritional Products — marine ingredients/omega-3s
+- Acadian Seaplants — seaweed / marine agriculture
+- High Liner Foods — global seafood processing, HQ Lunenburg NS
+- Clearwater Seafoods — premium shellfish, national and international scale
+- Alaagi — seaweed-based bioplastic film for cold-chain packaging (Ocean Startup Challenge 2025)
+- DeFort Bio — biodegradable lobster band alternatives (Ocean Startup Challenge 2025)
 
 TRANSPORTATION & LOGISTICS:
 - Port of Halifax / Halifax Port Authority — major Atlantic port
@@ -141,21 +151,46 @@ TRANSPORTATION & LOGISTICS:
 - Horizon Maritime Services — offshore vessel support
 - Oceanex — marine shipping, Atlantic Canada
 
-FISHERIES (broad ocean operations only):
-- High Liner Foods — global seafood processing, HQ Lunenburg NS
-- Clearwater Seafoods — premium shellfish, national and international scale
-
 EDUCATION & RESEARCH:
 - Bedford Institute of Oceanography (BIO) — federal ocean research, Dartmouth NS
 - Dalhousie University — Faculty of Science, ocean/marine programs
 - DRDC Atlantic — Defence Research & Development Canada, maritime focus
 - National Research Council Canada (NRC) — ocean science and engineering
-- COVE (Centre for Ocean Ventures & Entrepreneurship) — Halifax ocean innovation hub
+- COVE (Centre for Ocean Ventures & Entrepreneurship) — Halifax ocean innovation hub, hosting $29.4M Maritime Defence Innovation Secure Hub (DISH)
 
-NETWORKS & ASSOCIATIONS:
+INVESTORS, ACCELERATORS & NETWORKS:
+- Invest Nova Scotia (formerly Innovacorp) — Crown Corp VC, named "Global Top Blue Economy VC Firm" by Startup Genome. Runs Start-Up Yard at COVE
+- Build Ventures — Halifax-based, $50.5M Fund II, seed/Series A
+- Concrete Ventures — Halifax pre-seed fund, $18M+, 50% deployed in NS
+- Propeller Ventures — Boston, $117M ocean & climate fund, led pHathom's seed
+- S2G Ventures (Oceans Strategy) — Chicago impact fund, backed Mara Renewables
+- Katapult Ocean — Norwegian, world's most active ocean impact VC
+- BDC Capital — Canada's largest VC, Atlantic office active in Halifax
+- NBIF — Atlantic Canada pre-seed/seed, backed pHathom
+- NorthX — Atlantic cleantech-focused fund
+- CDL-Atlantic Oceans Stream — Dalhousie, 9-month accelerator, no equity
+- Ocean Startup Project — national program, 90+ companies since 2020, up to $25K non-dilutive
+- Canada's Ocean Supercluster — up to $2M per R&D project
 - OTCNS (Ocean Technology Council of Nova Scotia)
 - Ocean Tracking Network — Dalhousie, global ocean monitoring
 - COINAtlantic — Coastal and Ocean Information Network Atlantic
+
+DO NOT PURSUE (out of scope):
+- SBM Offshore — oil & gas production systems; enterprise scale
+- ExxonMobil Canada — offshore oil & gas major
+- Shell Canada — offshore energy exploration` : `ECOSYSTEM REFERENCE:
+Search for ocean-focused organizations near ${brief.geography}. Include ALL types: established companies, startups, research institutions, accelerators, investment funds, NGOs, public-private partnerships, and Crown corporations operating in the blue economy.
+
+Also search for:
+- Local ocean tech accelerators and innovation hubs near ${brief.geography}
+- VC funds and angel networks investing in blue economy in this region
+- University-affiliated ocean research programs
+- Government agencies with ocean/coastal mandates
+- Industry associations and ocean technology councils
+
+DO NOT PURSUE (out of scope):
+- Enterprise-scale oil & gas companies (ExxonMobil, Shell, SBM Offshore)
+- Organizations with no connection to ocean/marine/coastal sectors`}
 
 OUTPUT FORMAT:
 Return your results as a JSON array with this exact structure. Include both organization fields AND lead contact fields:
