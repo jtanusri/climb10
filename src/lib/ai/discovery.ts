@@ -1,6 +1,6 @@
 import { getGeminiModelWithSearch } from './client';
 import { buildDiscoveryPrompt } from './prompts';
-import { createDiscoveryRun } from '../db/discovery';
+import { createDiscoveryRun, completeDiscoveryRun, failDiscoveryRun } from '../db/discovery';
 import type { Brief, BudgetTier, KeywordCategory, SignalStrength, LeadershipSignalTier } from '../db/types';
 import { parseBudgetToMillions } from '../utils/budget';
 import { getBudgetTier } from '../db/types';
@@ -65,6 +65,9 @@ function isFreshwater(missionFocus: string): boolean {
   return !hasOceanContext;
 }
 
+/**
+ * Run discovery and return results directly (used for local dev / direct calls).
+ */
 export async function runDiscovery(
   brief: Brief,
   customQuery?: string,
@@ -76,9 +79,55 @@ export async function runDiscovery(
   const result = await model.generateContent(prompt);
   const responseText = result.response.text();
 
+  const results = parseAndFilterResults(responseText);
+
+  const run = await createDiscoveryRun({
+    brief_id: brief.id,
+    query: customQuery || `Default search for ${brief.geography}`,
+    prompt_used: prompt,
+    raw_response: responseText,
+    results_json: JSON.stringify(results),
+    result_count: results.length,
+  });
+
+  return { results, runId: run.id };
+}
+
+/**
+ * Run discovery for a pre-created pending run (used for async/poll pattern on Netlify).
+ * Updates the run in-place when complete or failed.
+ */
+export async function executeDiscoveryForRun(
+  runId: number,
+  brief: Brief,
+  customQuery?: string,
+  radiusMiles?: number
+): Promise<void> {
+  try {
+    const model = getGeminiModelWithSearch();
+    const prompt = buildDiscoveryPrompt(brief, customQuery, radiusMiles);
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
+    const results = parseAndFilterResults(responseText);
+
+    await completeDiscoveryRun(runId, {
+      prompt_used: prompt,
+      raw_response: responseText,
+      results_json: JSON.stringify(results),
+      result_count: results.length,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Discovery failed';
+    console.error(`[discovery] Run ${runId} failed:`, error);
+    await failDiscoveryRun(runId, message);
+  }
+}
+
+function parseAndFilterResults(responseText: string): DiscoveryResult[] {
   let results: DiscoveryResult[] = [];
   try {
-    // Strip markdown fences if present (```json ... ```)
     const cleaned = responseText.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
     const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
@@ -129,14 +178,5 @@ export async function runDiscovery(
     return (tierOrder[a.leadership_signal_tier] ?? 2) - (tierOrder[b.leadership_signal_tier] ?? 2);
   });
 
-  const run = await createDiscoveryRun({
-    brief_id: brief.id,
-    query: customQuery || `Default search for ${brief.geography}`,
-    prompt_used: prompt,
-    raw_response: responseText,
-    results_json: JSON.stringify(results),
-    result_count: results.length,
-  });
-
-  return { results, runId: run.id };
+  return results;
 }

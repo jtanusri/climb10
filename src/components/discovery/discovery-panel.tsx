@@ -114,6 +114,7 @@ export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads =
     }
 
     try {
+      // Phase 1: Start discovery — returns immediately with runId
       const res = await fetch('/api/discover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,47 +123,30 @@ export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads =
           radiusMiles,
         }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      // Handle streaming SSE response
-      if (res.headers.get('content-type')?.includes('text/event-stream')) {
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error('No response body');
-        const decoder = new TextDecoder();
-        let buffer = '';
+      const runId = data.runId;
+      if (!runId) throw new Error('No run ID returned');
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
+      // Phase 2: Poll for results every 3 seconds
+      const maxAttempts = 40; // 40 × 3s = 2 minutes max
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-          // Parse SSE events from buffer
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        const pollRes = await fetch(`/api/discover/${runId}`);
+        const pollData = await pollRes.json();
 
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line.startsWith('event: ')) {
-              const eventType = line.slice(7).trim();
-              const dataLine = lines[i + 1];
-              if (dataLine?.startsWith('data: ')) {
-                const data = JSON.parse(dataLine.slice(6));
-                if (eventType === 'result') {
-                  setResults(data.results || []);
-                } else if (eventType === 'error') {
-                  throw new Error(data.error);
-                }
-                // Skip 'ping' events — they're just keepalives
-                i++; // Skip the data line
-              }
-            }
-          }
+        if (pollData.status === 'complete') {
+          setResults(pollData.results || []);
+          return;
         }
-      } else {
-        // Fallback for non-streaming response (local dev)
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        setResults(data.results || []);
+        if (pollData.status === 'failed') {
+          throw new Error(pollData.error || 'Discovery failed');
+        }
+        // status === 'pending' — keep polling
       }
+      throw new Error('Discovery timed out. Please try again.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Discovery failed');
     } finally {

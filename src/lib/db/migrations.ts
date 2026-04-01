@@ -29,6 +29,8 @@ export async function runMigrations(db: Client) {
       results_json TEXT DEFAULT '[]',
       result_count INTEGER DEFAULT 0,
       orgs_added_to_pipeline INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'complete',
+      error TEXT DEFAULT '',
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (brief_id) REFERENCES brief(id)
     )`,
@@ -108,4 +110,16 @@ export async function runMigrations(db: Client) {
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
   ], 'write');
+
+  // Add status column to existing discovery_runs tables (idempotent)
+  try {
+    await db.execute(`ALTER TABLE discovery_runs ADD COLUMN status TEXT DEFAULT 'complete'`);
+  } catch {
+    // Column already exists — ignore
+  }
+  try {
+    await db.execute(`ALTER TABLE discovery_runs ADD COLUMN error TEXT DEFAULT ''`);
+  } catch {
+    // Column already exists — ignore
+  }
 }

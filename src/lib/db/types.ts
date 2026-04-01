@@ -158,6 +158,8 @@ export interface DiscoveryRun {
   results_json: string;
   result_count: number;
   orgs_added_to_pipeline: number;
+  status: 'pending' | 'complete' | 'failed';
+  error: string;
   created_at: string;
 }
 
