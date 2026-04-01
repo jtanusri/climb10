@@ -2,5 +2,13 @@
   command = "npm run build"
   publish = ".next"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Background function for long-running Gemini discovery calls (up to 15 min)
+[functions."run-discovery-background"]
+  type = "background"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -5,9 +5,9 @@ import { createPendingDiscoveryRun } from '@/lib/db/discovery';
 
 /**
  * POST /api/discover
- * Creates a pending discovery run and kicks off the Gemini search
- * via the /api/discover/execute endpoint (fire-and-forget).
- * Returns the runId immediately so the client can poll for results.
+ * Creates a pending discovery run and invokes a Netlify Background Function
+ * to run the actual Gemini search (up to 15 min execution time).
+ * Returns runId immediately so the client can poll GET /api/discover/[runId].
  */
 export async function POST(request: Request) {
   try {
@@ -28,20 +28,27 @@ export async function POST(request: Request) {
       query: query || `Default search for ${brief.geography}`,
     });
 
-    // Fire-and-forget: trigger the execute endpoint
-    // Use the request URL to build the absolute URL for the execute endpoint
+    // Invoke the Netlify Background Function
+    // Background functions return 202 immediately and continue executing for up to 15 min
     const url = new URL(request.url);
-    const executeUrl = `${url.origin}/api/discover/execute`;
+    const bgFunctionUrl = `${url.origin}/.netlify/functions/run-discovery-background`;
 
-    fetch(executeUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ runId: run.id, query, radiusMiles }),
-    }).catch(err => {
-      console.error('[discover] Failed to trigger execute:', err);
-    });
+    console.log(`[discover] Invoking background function at ${bgFunctionUrl} for run ${run.id}`);
 
-    // Return immediately with the runId
+    // We await the fetch to ensure the request is sent, but the background function
+    // returns 202 immediately, so this resolves in milliseconds
+    try {
+      const bgRes = await fetch(bgFunctionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId: run.id, query, radiusMiles }),
+      });
+      console.log(`[discover] Background function response: ${bgRes.status}`);
+    } catch (err) {
+      console.error('[discover] Failed to invoke background function:', err);
+      // Don't fail the main request — the poll will eventually show 'failed'
+    }
+
     return NextResponse.json({ runId: run.id, status: 'pending' });
   } catch (error) {
     console.error('[discover] Error:', error);
