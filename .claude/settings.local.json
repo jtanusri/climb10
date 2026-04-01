@@ -24,7 +24,16 @@
       "Bash(ls -a /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/.env*)",
       "Bash(npm uninstall:*)",
       "Bash(sqlite3 /Users/maheshjammalamadaka/Desktop/MyGithub/climb10/climb10.db .dump)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(curl -sSfL https://get.tur.so/install.sh)",
+      "Bash(bash)",
+      "Bash(/tmp/clean_header.sql:*)",
+      "Read(//tmp/**)",
+      "WebSearch",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh auth:*)"
     ]
   }
 }
