@@ -6,6 +6,8 @@ import { getContactsByOrg } from '@/lib/db/contacts';
 import { getBrief } from '@/lib/db/brief';
 import { generateOutreachDraft } from '@/lib/ai/outreach';
 
+export const maxDuration = 60;
+
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   await ensureMigrations();
   const { id } = await params;

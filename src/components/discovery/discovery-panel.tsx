@@ -122,9 +122,47 @@ export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads =
           radiusMiles,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setResults(data.results || []);
+
+      // Handle streaming SSE response
+      if (res.headers.get('content-type')?.includes('text/event-stream')) {
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error('No response body');
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // Parse SSE events from buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.startsWith('event: ')) {
+              const eventType = line.slice(7).trim();
+              const dataLine = lines[i + 1];
+              if (dataLine?.startsWith('data: ')) {
+                const data = JSON.parse(dataLine.slice(6));
+                if (eventType === 'result') {
+                  setResults(data.results || []);
+                } else if (eventType === 'error') {
+                  throw new Error(data.error);
+                }
+                // Skip 'ping' events — they're just keepalives
+                i++; // Skip the data line
+              }
+            }
+          }
+        }
+      } else {
+        // Fallback for non-streaming response (local dev)
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        setResults(data.results || []);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Discovery failed');
     } finally {

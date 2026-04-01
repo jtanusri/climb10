@@ -6,6 +6,8 @@ import { getNotesByOrg } from '@/lib/db/notes';
 import { createNote } from '@/lib/db/notes';
 import { generateBriefingNotes } from '@/lib/ai/briefing';
 
+export const maxDuration = 60;
+
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   await ensureMigrations();
   const { id } = await params;
