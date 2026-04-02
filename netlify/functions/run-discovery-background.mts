@@ -135,14 +135,21 @@ Return EXACTLY a JSON array of objects. Each object must have these fields:
   "leadership_signal_evidence": "Evidence for the leadership signal",
   "lat": 44.6488,
   "lng": -63.5752,
-  "contact_name": "Name of a key leader",
-  "contact_email": "email if publicly available",
-  "contact_position": "Title",
-  "contact_linkedin": "LinkedIn URL if available",
-  "contact_bio": "Brief bio",
+  "contact_name": "Real name from a verified public source, or empty string if not found",
+  "contact_email": "Verified email from official website or press release, or empty string",
+  "contact_position": "Verified title, or empty string",
+  "contact_linkedin": "Real LinkedIn profile URL, or empty string",
+  "contact_bio": "Brief bio from verified source, or empty string",
   "review_status": "Lead for Review",
   "host_producer_notes": "Any notable context"
 }
+
+CRITICAL — CONTACT ACCURACY RULES:
+- ONLY include contact_name, contact_email, contact_position, contact_linkedin, and contact_bio if you found them from a VERIFIED public source (official website, LinkedIn, press release, news article)
+- DO NOT fabricate or guess contact names. If you cannot find a real person's name, set contact_name to "" (empty string)
+- DO NOT fabricate email addresses. If you cannot verify an email, set contact_email to "" (empty string)
+- DO NOT fabricate LinkedIn URLs. If you cannot find a real LinkedIn profile URL, set contact_linkedin to "" (empty string)
+- It is far better to return empty contact fields than to return invented ones
 
 Find 15-25 organizations. Return ONLY the JSON array, no other text.`;
 }

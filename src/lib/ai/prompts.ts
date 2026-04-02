@@ -224,8 +224,16 @@ FIELD NOTES:
 - signal_strength: one of "high", "strong", "supplemental", "careful" — how strong a lead for Leslie
 - leadership_signal_tier: one of "confirmed", "inferred", "unknown" — evidence quality for leadership challenge
 - leadership_signal_evidence: 1-3 sentences describing specific evidence or standard 'insufficient data' note
-- lat/lng: approximate coordinates for Halifax-area mapping (decimal degrees)
+- lat/lng: approximate coordinates for mapping (decimal degrees)
 - review_status: one of "Lead for Business", "Lead for Review", "Pending Review", "Do NOT Contact"
+
+CRITICAL — CONTACT ACCURACY RULES:
+- ONLY include contact_name, contact_email, contact_position, contact_linkedin, and contact_bio if you found them from a VERIFIED public source (official website, LinkedIn, press release, news article)
+- DO NOT fabricate or guess contact names. If you cannot find a real person's name, set contact_name to "" (empty string)
+- DO NOT fabricate email addresses. If you cannot verify an email, set contact_email to "" (empty string)
+- DO NOT fabricate LinkedIn URLs. If you cannot find a real LinkedIn profile URL, set contact_linkedin to "" (empty string)
+- It is far better to return empty contact fields than to return invented ones
+- For contact_position, only use titles you found in public sources — do not invent titles
 
 COUNT AND QUALITY:
 Return between 10 and 15 results. Prefer verified organizations with web-searchable evidence over speculative results. Do not return fewer than 10 results. Distribute across all three signal tiers — do not exclude unknown-tier orgs to meet a count target. Sort by estimated budget (high to low) with signal tier as tiebreaker.
