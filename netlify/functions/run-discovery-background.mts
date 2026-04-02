@@ -145,10 +145,10 @@ Return EXACTLY a JSON array of objects. Each object must have these fields:
 }
 
 CRITICAL — CONTACT ACCURACY RULES:
-- ONLY include contact_name, contact_email, contact_position, contact_linkedin, and contact_bio if you found them from a VERIFIED public source (official website, LinkedIn, press release, news article)
+- ONLY include contact_name, contact_email, contact_position, and contact_bio if you found them from a VERIFIED public source (official website, LinkedIn, press release, news article)
 - DO NOT fabricate or guess contact names. If you cannot find a real person's name, set contact_name to "" (empty string)
 - DO NOT fabricate email addresses. If you cannot verify an email, set contact_email to "" (empty string)
-- DO NOT fabricate LinkedIn URLs. If you cannot find a real LinkedIn profile URL, set contact_linkedin to "" (empty string)
+- DO NOT include LinkedIn profile URLs — ALWAYS set contact_linkedin to "" (empty string). LinkedIn URLs are unreliable and will be generated separately.
 - It is far better to return empty contact fields than to return invented ones
 
 Find 15-25 organizations. Return ONLY the JSON array, no other text.`;
@@ -161,17 +161,28 @@ const SINGLE_SPECIES_KW = ["salmon-only", "lobster-only", "lobster harvester", "
 const FRESHWATER_KW = ["lake", "river", "freshwater", "great lakes"];
 const OCEAN_KW = ["ocean", "marine", "maritime", "coastal", "sea"];
 
-function filterResults(results: Record<string, unknown>[]): Record<string, unknown>[] {
-  return results.filter((r) => {
-    const name = ((r.name as string) || "").toLowerCase();
-    const mission = ((r.mission_focus as string) || "").toLowerCase();
-    if (EXCLUDED_ORGS.some((e) => name.includes(e))) return false;
-    if (SINGLE_SPECIES_KW.some((kw) => name.includes(kw) || mission.includes(kw))) return false;
-    const hasFreshwater = FRESHWATER_KW.some((kw) => mission.includes(kw));
-    if (hasFreshwater && !OCEAN_KW.some((kw) => mission.includes(kw))) return false;
-    if (!r.name || !r.mission_focus) return false;
-    return true;
-  });
+function filterAndEnrichResults(results: Record<string, unknown>[]): Record<string, unknown>[] {
+  return results
+    .filter((r) => {
+      const name = ((r.name as string) || "").toLowerCase();
+      const mission = ((r.mission_focus as string) || "").toLowerCase();
+      if (EXCLUDED_ORGS.some((e) => name.includes(e))) return false;
+      if (SINGLE_SPECIES_KW.some((kw) => name.includes(kw) || mission.includes(kw))) return false;
+      const hasFreshwater = FRESHWATER_KW.some((kw) => mission.includes(kw));
+      if (hasFreshwater && !OCEAN_KW.some((kw) => mission.includes(kw))) return false;
+      if (!r.name || !r.mission_focus) return false;
+      return true;
+    })
+    .map((r) => {
+      // Replace any AI-generated LinkedIn URL with a reliable search link
+      let linkedinUrl = "";
+      const contactName = r.contact_name as string;
+      if (contactName) {
+        const searchTerms = [contactName, r.name as string].filter(Boolean).join(" ");
+        linkedinUrl = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(searchTerms)}`;
+      }
+      return { ...r, contact_linkedin: linkedinUrl };
+    });
 }
 
 // --- Main handler ---
@@ -228,7 +239,7 @@ export default async function handler(req: Request, _context: Context) {
       console.error("[bg-discovery] Failed to parse:", responseText.substring(0, 200));
     }
 
-    results = filterResults(results);
+    results = filterAndEnrichResults(results);
 
     // Save to Turso
     await completeRun(db, runId, {

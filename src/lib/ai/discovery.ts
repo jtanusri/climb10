@@ -159,14 +159,21 @@ function parseAndFilterResults(responseText: string): DiscoveryResult[] {
     return true;
   });
 
-  // Budget normalization and tier assignment (NOT a filter)
+  // Budget normalization, tier assignment, and LinkedIn search URL generation
   results = results.map(r => {
     const budgetM = parseBudgetToMillions(r.estimated_budget);
+    // Replace any AI-generated LinkedIn URL with a reliable search link
+    let linkedinUrl = '';
+    if (r.contact_name) {
+      const searchTerms = [r.contact_name, r.name].filter(Boolean).join(' ');
+      linkedinUrl = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(searchTerms)}`;
+    }
     return {
       ...r,
       budget_tier: getBudgetTier(budgetM),
       leadership_signal_tier: r.leadership_signal_tier || 'unknown',
       leadership_signal_evidence: r.leadership_signal_evidence || 'Insufficient public data to assess leadership challenges. Recommend direct outreach to verify organizational context before pursuing.',
+      contact_linkedin: linkedinUrl,
     };
   });
 

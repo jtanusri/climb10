@@ -228,10 +228,10 @@ FIELD NOTES:
 - review_status: one of "Lead for Business", "Lead for Review", "Pending Review", "Do NOT Contact"
 
 CRITICAL — CONTACT ACCURACY RULES:
-- ONLY include contact_name, contact_email, contact_position, contact_linkedin, and contact_bio if you found them from a VERIFIED public source (official website, LinkedIn, press release, news article)
+- ONLY include contact_name, contact_email, contact_position, and contact_bio if you found them from a VERIFIED public source (official website, LinkedIn, press release, news article)
 - DO NOT fabricate or guess contact names. If you cannot find a real person's name, set contact_name to "" (empty string)
 - DO NOT fabricate email addresses. If you cannot verify an email, set contact_email to "" (empty string)
-- DO NOT fabricate LinkedIn URLs. If you cannot find a real LinkedIn profile URL, set contact_linkedin to "" (empty string)
+- DO NOT include LinkedIn profile URLs — ALWAYS set contact_linkedin to "" (empty string). LinkedIn URLs are unreliable and will be generated separately.
 - It is far better to return empty contact fields than to return invented ones
 - For contact_position, only use titles you found in public sources — do not invent titles
 
