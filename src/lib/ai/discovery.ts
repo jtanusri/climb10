@@ -162,11 +162,12 @@ function parseAndFilterResults(responseText: string): DiscoveryResult[] {
   // Budget normalization, tier assignment, and LinkedIn search URL generation
   results = results.map(r => {
     const budgetM = parseBudgetToMillions(r.estimated_budget);
-    // Replace any AI-generated LinkedIn URL with a reliable search link
+    // Generate a LinkedIn search link from contact name + city (simple terms work best)
     let linkedinUrl = '';
     if (r.contact_name) {
-      const searchTerms = [r.contact_name, r.name].filter(Boolean).join(' ');
-      linkedinUrl = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(searchTerms)}`;
+      const city = (r.location || '').split(',')[0].trim();
+      const searchTerms = [r.contact_name, city].filter(Boolean).join(' ');
+      linkedinUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(searchTerms)}`;
     }
     return {
       ...r,

@@ -174,12 +174,13 @@ function filterAndEnrichResults(results: Record<string, unknown>[]): Record<stri
       return true;
     })
     .map((r) => {
-      // Replace any AI-generated LinkedIn URL with a reliable search link
+      // Generate a LinkedIn search link from contact name + city (simple terms work best)
       let linkedinUrl = "";
       const contactName = r.contact_name as string;
       if (contactName) {
-        const searchTerms = [contactName, r.name as string].filter(Boolean).join(" ");
-        linkedinUrl = `https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(searchTerms)}`;
+        const city = ((r.location as string) || "").split(",")[0].trim();
+        const searchTerms = [contactName, city].filter(Boolean).join(" ");
+        linkedinUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(searchTerms)}`;
       }
       return { ...r, contact_linkedin: linkedinUrl };
     });
