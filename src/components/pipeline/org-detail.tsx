@@ -47,6 +47,11 @@ export default function OrgDetail({ org: initialOrg, contacts: initialContacts, 
     mission_focus: org.mission_focus,
     leadership_signal_tier: org.leadership_signal_tier,
     leadership_signal_evidence: org.leadership_signal_evidence,
+    address: org.address || '',
+    city: org.city || '',
+    state: org.state || '',
+    zip: org.zip || '',
+    country: org.country || '',
   });
 
   const [showContactForm, setShowContactForm] = useState(false);
@@ -135,7 +140,11 @@ export default function OrgDetail({ org: initialOrg, contacts: initialContacts, 
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-silver-900">{org.name}</h1>
-          {org.location && <p className="text-sm text-silver-500">{org.location}</p>}
+          {(org.city || org.state || org.country || org.location) && (
+            <p className="text-sm text-silver-500">
+              {[org.address, org.city, org.state, org.zip, org.country].filter(Boolean).join(', ') || org.location}
+            </p>
+          )}
         </div>
         <select
           value={org.stage}
@@ -216,8 +225,31 @@ export default function OrgDetail({ org: initialOrg, contacts: initialContacts, 
                   className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-silver-700 mb-1">Location</label>
-                <input value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))}
+                <label className="block text-sm font-medium text-silver-700 mb-1">Address</label>
+                <input value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))}
+                  placeholder="Street address"
+                  className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-silver-700 mb-1">City</label>
+                <input value={form.city} onChange={e => setForm(f => ({...f, city: e.target.value}))}
+                  className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-silver-700 mb-1">State</label>
+                <input value={form.state} onChange={e => setForm(f => ({...f, state: e.target.value}))}
+                  className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-silver-700 mb-1">Zip</label>
+                <input value={form.zip} onChange={e => setForm(f => ({...f, zip: e.target.value}))}
+                  className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-silver-700 mb-1">Country</label>
+                <input value={form.country} onChange={e => setForm(f => ({...f, country: e.target.value}))}
                   className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
               </div>
             </div>

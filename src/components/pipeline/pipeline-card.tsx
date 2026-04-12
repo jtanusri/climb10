@@ -17,9 +17,10 @@ export default function PipelineCard({ org }: { org: Organization }) {
     <Link href={`/pipeline/${org.id}`}>
       <div className="bg-white rounded-lg border border-silver-200 p-3 hover:shadow-md hover:border-plum-300 transition-all cursor-pointer">
         <h4 className="font-medium text-silver-900 text-sm mb-1 truncate">{org.name}</h4>
-        {org.location && (
+        {(org.city || org.state || org.country || org.location) && (
           <p className="flex items-center gap-1 text-xs text-silver-500 mb-2">
-            <MapPin className="w-3 h-3" /> {org.location}
+            <MapPin className="w-3 h-3" />
+            {[org.address, org.city, org.state, org.zip, org.country].filter(Boolean).join(', ') || org.location}
           </p>
         )}
         <div className="flex flex-wrap gap-1.5">
