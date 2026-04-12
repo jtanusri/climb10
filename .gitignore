@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# next.js build
+.next/
+
+# env files
+.env
+.env.local
+.env*.local
+
+# debug
+npm-debug.log*
+
+# misc
+.DS_Store
+*.tsbuildinfo
+
+# netlify
+.netlify/
+
+# claude
+.claude/worktrees/
