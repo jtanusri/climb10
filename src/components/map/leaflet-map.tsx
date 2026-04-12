@@ -45,6 +45,8 @@ const CATEGORY_ICON_PATHS: Record<string, string> = {
   gov: '/governance.png',
   cons: '/cons.png',
   food: '/food.png',
+  donor: '/donor.png',
+  investor: '/investor.png',
 };
 
 function getCategoryColor(cat: string): string {
