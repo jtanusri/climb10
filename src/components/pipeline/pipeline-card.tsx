@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { MapPin, DollarSign, Shield } from 'lucide-react';
 import type { Organization } from '@/lib/db/types';
-import { SIGNAL_TIER_DISPLAY, BUDGET_TIERS, getBudgetTier } from '@/lib/db/types';
+import { SIGNAL_TIER_DISPLAY, KEYWORD_CATEGORIES, BUDGET_TIERS, getBudgetTier } from '@/lib/db/types';
 import { parseBudgetToMillions } from '@/lib/utils/budget';
 
 export default function PipelineCard({ org }: { org: Organization }) {
@@ -11,6 +11,7 @@ export default function PipelineCard({ org }: { org: Organization }) {
   const budgetTier = getBudgetTier(budgetM);
   const budgetTierDisplay = BUDGET_TIERS.find(t => t.value === budgetTier);
   const signalDisplay = SIGNAL_TIER_DISPLAY[org.leadership_signal_tier || 'unknown'];
+  const categoryDisplay = KEYWORD_CATEGORIES.find(c => c.value === org.keyword_category);
 
   return (
     <Link href={`/pipeline/${org.id}`}>
@@ -22,6 +23,14 @@ export default function PipelineCard({ org }: { org: Organization }) {
           </p>
         )}
         <div className="flex flex-wrap gap-1.5">
+          {categoryDisplay && (
+            <span
+              className="text-[10px] px-1.5 py-0.5 rounded-full font-medium text-white"
+              style={{ backgroundColor: categoryDisplay.color }}
+            >
+              {categoryDisplay.label.split(' / ')[0]}
+            </span>
+          )}
           {org.estimated_budget && (
             <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${budgetTierDisplay?.color || 'bg-silver-100 text-silver-600'}`}>
               <DollarSign className="w-2.5 h-2.5" />
