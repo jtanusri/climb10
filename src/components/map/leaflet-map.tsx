@@ -1,12 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
-import { MapContainer, TileLayer, Circle, Popup, Marker } from 'react-leaflet';
+import { useMemo, useEffect } from 'react';
+import { MapContainer, TileLayer, Circle, Popup, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import Link from 'next/link';
 import { KEYWORD_CATEGORIES, SIGNAL_TIER_DISPLAY } from '@/lib/db/types';
 import type { LeadershipSignalTier } from '@/lib/db/types';
 import 'leaflet/dist/leaflet.css';
+
+// Auto-fit map bounds to all markers
+function FitBounds({ orgs }: { orgs: { lat: number; lng: number }[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (orgs.length === 0) return;
+    const bounds = L.latLngBounds(orgs.map(o => [o.lat, o.lng]));
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
+  }, [map, orgs]);
+  return null;
+}
 
 interface MapOrg {
   id: number;
@@ -125,6 +136,8 @@ export default function LeafletMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <FitBounds orgs={orgs} />
 
       {showRadius && (
         <Circle
