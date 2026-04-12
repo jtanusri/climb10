@@ -18,6 +18,9 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
     mission_focus: '',
     estimated_budget: '',
     estimated_size: '',
+    city: '',
+    state: '',
+    country: '',
     contact_name: '',
     contact_email: '',
     contact_position: '',
@@ -43,8 +46,11 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
-          location: form.location.trim(),
+          location: [form.city, form.state, form.country].filter(Boolean).join(', ') || form.location.trim(),
           website: form.website.trim(),
+          city: form.city.trim(),
+          state: form.state.trim(),
+          country: form.country.trim(),
           keyword_category: form.keyword_category,
           mission_focus: form.mission_focus.trim(),
           estimated_budget: form.estimated_budget.trim(),
@@ -68,6 +74,7 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
       setForm({
         name: '', location: '', website: '', keyword_category: '',
         mission_focus: '', estimated_budget: '', estimated_size: '',
+        city: '', state: '', country: '',
         contact_name: '', contact_email: '', contact_position: '', notes: '',
       });
       onSuccess();
@@ -110,28 +117,50 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
             />
           </div>
 
-          {/* Location & Website */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* City / State / Country */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-silver-700 mb-1">Location</label>
+              <label className="block text-sm font-medium text-silver-700 mb-1">City</label>
               <input
                 type="text"
-                value={form.location}
-                onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                value={form.city}
+                onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
                 className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400"
-                placeholder="City, State"
+                placeholder="Halifax"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-silver-700 mb-1">Website</label>
+              <label className="block text-sm font-medium text-silver-700 mb-1">State / Region</label>
               <input
                 type="text"
-                value={form.website}
-                onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+                value={form.state}
+                onChange={e => setForm(f => ({ ...f, state: e.target.value }))}
                 className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400"
-                placeholder="https://..."
+                placeholder="Nova Scotia"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-silver-700 mb-1">Country</label>
+              <input
+                type="text"
+                value={form.country}
+                onChange={e => setForm(f => ({ ...f, country: e.target.value }))}
+                className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400"
+                placeholder="Canada"
+              />
+            </div>
+          </div>
+
+          {/* Website */}
+          <div>
+            <label className="block text-sm font-medium text-silver-700 mb-1">Website</label>
+            <input
+              type="text"
+              value={form.website}
+              onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+              className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400"
+              placeholder="https://..."
+            />
           </div>
 
           {/* Category */}

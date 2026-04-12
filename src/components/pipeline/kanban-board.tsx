@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useRouter } from 'next/navigation';
-import { Search, MapPin, Tag, X } from 'lucide-react';
+import { Search, Globe, MapPin, Tag, X } from 'lucide-react';
 import { PIPELINE_STAGES, KEYWORD_CATEGORIES, type Organization, type PipelineStage, type KeywordCategory } from '@/lib/db/types';
 import PipelineCard from './pipeline-card';
 import AddOrgModal from './add-org-modal';
@@ -12,69 +12,63 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
   const [orgs, setOrgs] = useState(initialOrgs);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<KeywordCategory | ''>('');
   const router = useRouter();
 
-  // Extract unique locations from orgs for the dropdown
-  const uniqueLocations = useMemo(() => {
-    const locs = new Set<string>();
+  // Extract unique countries and states
+  const uniqueCountries = useMemo(() => {
+    const set = new Set<string>();
+    orgs.forEach(o => { if (o.country) set.add(o.country); });
+    return Array.from(set).sort();
+  }, [orgs]);
+
+  const uniqueStates = useMemo(() => {
+    const set = new Set<string>();
     orgs.forEach(o => {
-      if (o.location) {
-        // Normalize: extract city/region from full location strings
-        const parts = o.location.split(',').map(p => p.trim());
-        if (parts.length >= 2) {
-          // Use last 2 parts (e.g., "Halifax, Nova Scotia" from "Dartmouth, Halifax, Nova Scotia")
-          locs.add(parts.slice(-2).join(', '));
-        }
-        locs.add(o.location);
+      if (o.state && (!countryFilter || o.country === countryFilter)) {
+        set.add(o.state);
       }
     });
-    return Array.from(locs).sort();
-  }, [orgs]);
+    return Array.from(set).sort();
+  }, [orgs, countryFilter]);
 
   // Filter orgs
   const filteredOrgs = useMemo(() => {
     return orgs.filter(o => {
-      // Text search — matches name, mission, location
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        const searchable = `${o.name} ${o.mission_focus} ${o.location} ${o.why_fit}`.toLowerCase();
+        const searchable = `${o.name} ${o.mission_focus} ${o.location} ${o.city} ${o.state} ${o.country} ${o.why_fit}`.toLowerCase();
         if (!searchable.includes(q)) return false;
       }
-      // Location filter
-      if (locationFilter) {
-        if (!o.location || !o.location.toLowerCase().includes(locationFilter.toLowerCase())) return false;
-      }
-      // Category filter
-      if (categoryFilter) {
-        if (o.keyword_category !== categoryFilter) return false;
-      }
+      if (countryFilter && o.country !== countryFilter) return false;
+      if (stateFilter && o.state !== stateFilter) return false;
+      if (categoryFilter && o.keyword_category !== categoryFilter) return false;
       return true;
     });
-  }, [orgs, searchQuery, locationFilter, categoryFilter]);
+  }, [orgs, searchQuery, countryFilter, stateFilter, categoryFilter]);
 
   const getOrgsByStage = (stage: PipelineStage) =>
     filteredOrgs.filter(o => o.stage === stage);
 
-  const hasActiveFilters = searchQuery || locationFilter || categoryFilter;
+  const hasActiveFilters = searchQuery || countryFilter || stateFilter || categoryFilter;
 
   const clearFilters = () => {
     setSearchQuery('');
-    setLocationFilter('');
+    setCountryFilter('');
+    setStateFilter('');
     setCategoryFilter('');
   };
 
   const handleDragEnd = async (result: DropResult) => {
     if (!result.destination) return;
-
     const orgId = Number(result.draggableId);
     const newStage = result.destination.droppableId as PipelineStage;
     const org = orgs.find(o => o.id === orgId);
     if (!org || org.stage === newStage) return;
 
     setOrgs(prev => prev.map(o => o.id === orgId ? { ...o, stage: newStage } : o));
-
     try {
       await fetch(`/api/organizations/${orgId}/stage`, {
         method: 'PUT',
@@ -96,9 +90,7 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
         </p>
         <div className="flex items-center gap-3">
           <span className="text-sm text-silver-500">
-            {hasActiveFilters
-              ? `${filteredOrgs.length} of ${orgs.length}`
-              : `${orgs.length} total`}
+            {hasActiveFilters ? `${filteredOrgs.length} of ${orgs.length}` : `${orgs.length} total`}
           </span>
           <button
             onClick={() => setShowAddModal(true)}
@@ -112,7 +104,7 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 bg-silver-50 border border-silver-200 rounded-xl px-4 py-3">
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-400" />
           <input
             type="text"
@@ -123,23 +115,38 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
           />
         </div>
 
-        {/* Location */}
-        <div className="relative min-w-[180px]">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-400" />
+        {/* Country */}
+        <div className="relative min-w-[150px]">
+          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-400" />
           <select
-            value={locationFilter}
-            onChange={e => setLocationFilter(e.target.value)}
+            value={countryFilter}
+            onChange={e => { setCountryFilter(e.target.value); setStateFilter(''); }}
             className="w-full pl-9 pr-3 py-1.5 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400 bg-white appearance-none cursor-pointer"
           >
-            <option value="">All Locations</option>
-            {uniqueLocations.map(loc => (
-              <option key={loc} value={loc}>{loc}</option>
+            <option value="">All Countries</option>
+            {uniqueCountries.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* State */}
+        <div className="relative min-w-[150px]">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-400" />
+          <select
+            value={stateFilter}
+            onChange={e => setStateFilter(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400 bg-white appearance-none cursor-pointer"
+          >
+            <option value="">All States / Regions</option>
+            {uniqueStates.map(s => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </div>
 
         {/* Category */}
-        <div className="relative min-w-[180px]">
+        <div className="relative min-w-[160px]">
           <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-400" />
           <select
             value={categoryFilter}
@@ -153,7 +160,7 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
           </select>
         </div>
 
-        {/* Clear filters */}
+        {/* Clear */}
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -181,9 +188,7 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={`flex-shrink-0 w-64 rounded-xl border p-3 transition-colors ${
-                      snapshot.isDraggingOver
-                        ? 'bg-plum-50 border-plum-300'
-                        : 'bg-silver-50 border-silver-200'
+                      snapshot.isDraggingOver ? 'bg-plum-50 border-plum-300' : 'bg-silver-50 border-silver-200'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-3 px-1">
@@ -192,7 +197,6 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
                       </span>
                       <span className="text-xs text-silver-500 ml-auto">{stageOrgs.length}</span>
                     </div>
-
                     <div className="space-y-2 min-h-[100px]">
                       {stageOrgs.map((org, index) => (
                         <Draggable key={org.id} draggableId={String(org.id)} index={index}>

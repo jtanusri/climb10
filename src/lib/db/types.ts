@@ -112,6 +112,11 @@ export interface Organization {
   signal_strength: SignalStrength | '';
   leadership_signal_tier: LeadershipSignalTier;
   leadership_signal_evidence: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
   lat: number | null;
   lng: number | null;
   discovery_run_id: number | null;

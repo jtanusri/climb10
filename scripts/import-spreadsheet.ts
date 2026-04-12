@@ -70,6 +70,11 @@ interface OrgImport {
   programAvenue: string;
   website: string;
   location: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
   contactEmail: string;
   leader1: string;
   personalEmail1: string;
@@ -91,8 +96,13 @@ function parsePrimaryOrgs(wb: XLSX.WorkBook): OrgImport[] {
   const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' });
   const orgs: OrgImport[] = [];
 
-  // Data starts at row 4 (index 3) — rows 0-2 are headers
-  for (let i = 3; i < rows.length; i++) {
+  // Data starts at row 4 (index 3) — rows 0-3 are headers
+  // Columns: 0=Org, 1=Focus, 2=Description, 3=ProgramAvenue, 4=Website,
+  //   5=Location, 6=Address, 7=City, 8=State, 9=Zip, 10=Country,
+  //   11=ContactEmail, 12=Leader1, 13=PersonalEmail1, 14=Leader2,
+  //   15=PersonalEmail2, 16=Leader3, 17=PersonalEmail3,
+  //   18=WhySpecial, 19=WhyFit, 20=Notes
+  for (let i = 4; i < rows.length; i++) {
     const r = rows[i];
     const name = clean(r[0]);
     if (!name || name === 'Organization') continue;
@@ -108,16 +118,21 @@ function parsePrimaryOrgs(wb: XLSX.WorkBook): OrgImport[] {
       programAvenue: clean(r[3]),
       website: clean(r[4]),
       location: clean(r[5]),
-      contactEmail: clean(r[6]),
-      leader1: clean(r[7]),
-      personalEmail1: clean(r[8]),
-      leader2: clean(r[9]),
-      personalEmail2: clean(r[10]),
-      leader3: clean(r[11]),
-      personalEmail3: clean(r[12]),
-      whySpecial: clean(r[13]),
-      whyFit: clean(r[14]),
-      notes: clean(r[15]),
+      address: clean(r[6]),
+      city: clean(r[7]),
+      state: clean(r[8]),
+      zip: clean(r[9]),
+      country: clean(r[10]),
+      contactEmail: clean(r[11]),
+      leader1: clean(r[12]),
+      personalEmail1: clean(r[13]),
+      leader2: clean(r[14]),
+      personalEmail2: clean(r[15]),
+      leader3: clean(r[16]),
+      personalEmail3: clean(r[17]),
+      whySpecial: clean(r[18]),
+      whyFit: clean(r[19]),
+      notes: clean(r[20]),
       keyword_category: classifyCategory(missionText + ' ' + name),
       source: 'spreadsheet_import',
     });
@@ -144,6 +159,7 @@ function parseDonors(wb: XLSX.WorkBook): OrgImport[] {
       programAvenue: clean(r[3]),
       website: clean(r[4]),
       location: clean(r[5]),
+      address: '', city: '', state: '', zip: '', country: '',
       contactEmail: clean(r[6]),
       leader1: clean(r[7]),
       personalEmail1: clean(r[8]),
@@ -180,6 +196,7 @@ function parseInvestors(wb: XLSX.WorkBook): OrgImport[] {
       programAvenue: '',
       website: clean(r[1]),
       location: '',
+      address: '', city: '', state: '', zip: '', country: '',
       contactEmail: '',
       leader1: clean(r[2]),
       personalEmail1: '',
@@ -213,17 +230,23 @@ async function insertOrg(org: OrgImport, existingNames: Set<string>): Promise<'i
     const missionFocus = [org.focus, org.description].filter(Boolean).join('. ');
     const whyFit = [org.whySpecial, org.whyFit].filter(Boolean).join('. ');
 
+    // Build location from address parts if not already set
+    const location = org.location || [org.city, org.state, org.country].filter(Boolean).join(', ');
+
     const result = await db.execute({
       sql: `INSERT INTO organizations (name, location, website, estimated_size, estimated_budget,
         mission_focus, why_fit, stage, keyword_category, signal_strength,
-        leadership_signal_tier, leadership_signal_evidence, lat, lng, discovery_run_id, source)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        leadership_signal_tier, leadership_signal_evidence,
+        address, city, state, zip, country,
+        lat, lng, discovery_run_id, source)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
-        org.name, org.location, org.website,
+        org.name, location, org.website,
         '', '', // estimated_size, estimated_budget
         missionFocus, whyFit,
         'identified', org.keyword_category,
         '', 'unknown', '', // signal_strength, leadership_signal_tier, evidence
+        org.address, org.city, org.state, org.zip, org.country,
         null, null, null, // lat, lng, discovery_run_id
         org.source,
       ],
@@ -292,12 +315,13 @@ async function main() {
   console.log(`Reading: ${absPath}`);
   const wb = XLSX.readFile(absPath);
 
-  // Ensure source column exists
-  try {
-    await db.execute(`ALTER TABLE organizations ADD COLUMN source TEXT DEFAULT 'ai_discovery'`);
-    console.log('Added source column to organizations table');
-  } catch {
-    // Already exists
+  // Ensure columns exist
+  for (const col of ['source', 'address', 'city', 'state', 'zip', 'country']) {
+    try {
+      const def = col === 'source' ? "'ai_discovery'" : "''";
+      await db.execute(`ALTER TABLE organizations ADD COLUMN ${col} TEXT DEFAULT ${def}`);
+      console.log(`Added ${col} column`);
+    } catch { /* already exists */ }
   }
 
   const existingNames = await getExistingOrgNames();

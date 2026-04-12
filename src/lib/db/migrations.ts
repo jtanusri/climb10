@@ -48,6 +48,11 @@ export async function runMigrations(db: Client) {
       signal_strength TEXT DEFAULT '',
       leadership_signal_tier TEXT DEFAULT 'unknown',
       leadership_signal_evidence TEXT DEFAULT '',
+      address TEXT DEFAULT '',
+      city TEXT DEFAULT '',
+      state TEXT DEFAULT '',
+      zip TEXT DEFAULT '',
+      country TEXT DEFAULT '',
       lat REAL,
       lng REAL,
       discovery_run_id INTEGER,
@@ -126,7 +131,11 @@ export async function runMigrations(db: Client) {
   // Add source column to organizations (idempotent)
   try {
     await db.execute(`ALTER TABLE organizations ADD COLUMN source TEXT DEFAULT 'ai_discovery'`);
-  } catch {
-    // Column already exists — ignore
+  } catch { /* already exists */ }
+  // Add address fields to organizations (idempotent)
+  for (const col of ['address', 'city', 'state', 'zip', 'country']) {
+    try {
+      await db.execute(`ALTER TABLE organizations ADD COLUMN ${col} TEXT DEFAULT ''`);
+    } catch { /* already exists */ }
   }
 }

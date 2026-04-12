@@ -24,8 +24,10 @@ export async function createOrg(data: Partial<Organization>): Promise<Organizati
   const result = await db.execute({
     sql: `INSERT INTO organizations (name, location, website, estimated_size, estimated_budget,
       mission_focus, why_fit, stage, keyword_category, signal_strength,
-      leadership_signal_tier, leadership_signal_evidence, lat, lng, discovery_run_id, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      leadership_signal_tier, leadership_signal_evidence,
+      address, city, state, zip, country,
+      lat, lng, discovery_run_id, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       data.name ?? '', data.location ?? '', data.website ?? '',
       data.estimated_size ?? '', data.estimated_budget ?? '',
@@ -33,6 +35,8 @@ export async function createOrg(data: Partial<Organization>): Promise<Organizati
       data.stage ?? 'identified', data.keyword_category ?? '',
       data.signal_strength ?? '', data.leadership_signal_tier ?? 'unknown',
       data.leadership_signal_evidence ?? '',
+      data.address ?? '', data.city ?? '', data.state ?? '',
+      data.zip ?? '', data.country ?? '',
       data.lat ?? null, data.lng ?? null, data.discovery_run_id ?? null,
       data.source ?? 'ai_discovery',
     ],
@@ -57,6 +61,7 @@ export async function updateOrg(id: number, data: Partial<Organization>): Promis
       estimated_budget = ?, mission_focus = ?, why_fit = ?,
       keyword_category = ?, signal_strength = ?,
       leadership_signal_tier = ?, leadership_signal_evidence = ?,
+      address = ?, city = ?, state = ?, zip = ?, country = ?,
       lat = ?, lng = ?, updated_at = datetime('now')
     WHERE id = ?`,
     args: [
@@ -68,6 +73,9 @@ export async function updateOrg(id: number, data: Partial<Organization>): Promis
       data.signal_strength ?? org.signal_strength,
       data.leadership_signal_tier ?? org.leadership_signal_tier,
       data.leadership_signal_evidence ?? org.leadership_signal_evidence,
+      data.address ?? org.address, data.city ?? org.city,
+      data.state ?? org.state, data.zip ?? org.zip,
+      data.country ?? org.country,
       data.lat ?? org.lat, data.lng ?? org.lng, id,
     ],
   });
