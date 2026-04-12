@@ -50,7 +50,7 @@ export function getBudgetTierDisplay(tier: BudgetTier) {
 }
 
 // Keyword categories for map visualization
-export type KeywordCategory = 'sector' | 'infra' | 'econ' | 'sci' | 'gov' | 'cons' | 'food';
+export type KeywordCategory = 'sector' | 'infra' | 'econ' | 'sci' | 'gov' | 'cons' | 'food' | 'donor' | 'investor';
 
 export const KEYWORD_CATEGORIES: { value: KeywordCategory; label: string; color: string }[] = [
   { value: 'sector', label: 'Sector Synonyms', color: '#1D9E75' },
@@ -60,7 +60,11 @@ export const KEYWORD_CATEGORIES: { value: KeywordCategory; label: string; color:
   { value: 'gov', label: 'Governance / Policy', color: '#993C1D' },
   { value: 'cons', label: 'Conservation / Sustainability', color: '#0E7C5A' },
   { value: 'food', label: 'Food Systems', color: '#D06B18' },
+  { value: 'donor', label: 'Donors / Philanthropy', color: '#8B2FC9' },
+  { value: 'investor', label: 'Investors / Accelerators', color: '#C4960A' },
 ];
+
+export type OrgSource = 'ai_discovery' | 'spreadsheet_import' | 'manual';
 
 // Signal strength for map marker sizing
 export type SignalStrength = 'high' | 'strong' | 'supplemental' | 'careful';
@@ -111,6 +115,7 @@ export interface Organization {
   lat: number | null;
   lng: number | null;
   discovery_run_id: number | null;
+  source: OrgSource;
   created_at: string;
   updated_at: string;
 }

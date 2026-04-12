@@ -5,9 +5,11 @@ import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-p
 import { useRouter } from 'next/navigation';
 import { PIPELINE_STAGES, type Organization, type PipelineStage } from '@/lib/db/types';
 import PipelineCard from './pipeline-card';
+import AddOrgModal from './add-org-modal';
 
 export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization[] }) {
   const [orgs, setOrgs] = useState(initialOrgs);
+  const [showAddModal, setShowAddModal] = useState(false);
   const router = useRouter();
 
   const getOrgsByStage = (stage: PipelineStage) =>
@@ -43,8 +45,22 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
         <p className="text-sm text-silver-600">
           Drag organizations between columns to update their stage. Click a card for details.
         </p>
-        <span className="text-sm text-silver-500">{orgs.length} total</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-silver-500">{orgs.length} total</span>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-ocean-600 hover:bg-ocean-700 rounded-lg flex items-center gap-1.5"
+          >
+            <span className="text-base leading-none">+</span> Add Organization
+          </button>
+        </div>
       </div>
+
+      <AddOrgModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSuccess={() => router.refresh()}
+      />
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4 min-h-[60vh]">

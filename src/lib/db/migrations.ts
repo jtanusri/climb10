@@ -51,6 +51,7 @@ export async function runMigrations(db: Client) {
       lat REAL,
       lng REAL,
       discovery_run_id INTEGER,
+      source TEXT DEFAULT 'ai_discovery',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (discovery_run_id) REFERENCES discovery_runs(id)
@@ -119,6 +120,12 @@ export async function runMigrations(db: Client) {
   }
   try {
     await db.execute(`ALTER TABLE discovery_runs ADD COLUMN error TEXT DEFAULT ''`);
+  } catch {
+    // Column already exists — ignore
+  }
+  // Add source column to organizations (idempotent)
+  try {
+    await db.execute(`ALTER TABLE organizations ADD COLUMN source TEXT DEFAULT 'ai_discovery'`);
   } catch {
     // Column already exists — ignore
   }

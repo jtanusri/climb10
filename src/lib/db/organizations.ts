@@ -24,8 +24,8 @@ export async function createOrg(data: Partial<Organization>): Promise<Organizati
   const result = await db.execute({
     sql: `INSERT INTO organizations (name, location, website, estimated_size, estimated_budget,
       mission_focus, why_fit, stage, keyword_category, signal_strength,
-      leadership_signal_tier, leadership_signal_evidence, lat, lng, discovery_run_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      leadership_signal_tier, leadership_signal_evidence, lat, lng, discovery_run_id, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       data.name ?? '', data.location ?? '', data.website ?? '',
       data.estimated_size ?? '', data.estimated_budget ?? '',
@@ -34,6 +34,7 @@ export async function createOrg(data: Partial<Organization>): Promise<Organizati
       data.signal_strength ?? '', data.leadership_signal_tier ?? 'unknown',
       data.leadership_signal_evidence ?? '',
       data.lat ?? null, data.lng ?? null, data.discovery_run_id ?? null,
+      data.source ?? 'ai_discovery',
     ],
   });
 
