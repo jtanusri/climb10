@@ -56,6 +56,7 @@ export async function runMigrations(db: Client) {
       lat REAL,
       lng REAL,
       discovery_run_id INTEGER,
+      notes TEXT DEFAULT '',
       source TEXT DEFAULT 'ai_discovery',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
@@ -133,7 +134,7 @@ export async function runMigrations(db: Client) {
     await db.execute(`ALTER TABLE organizations ADD COLUMN source TEXT DEFAULT 'ai_discovery'`);
   } catch { /* already exists */ }
   // Add address fields to organizations (idempotent)
-  for (const col of ['address', 'city', 'state', 'zip', 'country']) {
+  for (const col of ['address', 'city', 'state', 'zip', 'country', 'notes']) {
     try {
       await db.execute(`ALTER TABLE organizations ADD COLUMN ${col} TEXT DEFAULT ''`);
     } catch { /* already exists */ }
