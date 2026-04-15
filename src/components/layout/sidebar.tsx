@@ -12,6 +12,7 @@ import {
   BookOpen,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -93,7 +94,16 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-silver-200">
+        <div className="p-4 border-t border-silver-200 space-y-3">
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-silver-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </form>
           <p className="text-xs text-silver-500 text-center">
             Nature Advisory Platform
           </p>

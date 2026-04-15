@@ -116,7 +116,28 @@ export async function runMigrations(db: Client) {
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     )`,
+    `CREATE TABLE IF NOT EXISTS allowed_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE,
+      name TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS magic_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      used INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`,
   ], 'write');
+
+  // Seed initial allowed users (idempotent)
+  for (const email of ['jtanusri@gmail.com', 'leslie@lesliebenson.com']) {
+    try {
+      await db.execute({ sql: 'INSERT OR IGNORE INTO allowed_users (email) VALUES (?)', args: [email] });
+    } catch { /* already exists */ }
+  }
 
   // Add status column to existing discovery_runs tables (idempotent)
   try {
