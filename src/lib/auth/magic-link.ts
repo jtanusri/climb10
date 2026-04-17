@@ -22,7 +22,10 @@ export async function generateMagicLink(email: string): Promise<string> {
     args: [email.toLowerCase().trim(), token, expiresAt],
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  // Normalize app URL: strip trailing slash and any accidental path suffix
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const parsed = new URL(rawUrl);
+  const appUrl = `${parsed.protocol}//${parsed.host}`;
   return `${appUrl}/api/auth/verify?token=${token}`;
 }
 
