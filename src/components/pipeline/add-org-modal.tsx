@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { KEYWORD_CATEGORIES, type KeywordCategory } from '@/lib/db/types';
+import { KEYWORD_CATEGORIES, ORG_TYPES, type KeywordCategory, type OrgType } from '@/lib/db/types';
 
 interface AddOrgModalProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
     location: '',
     website: '',
     keyword_category: '' as KeywordCategory | '',
+    org_type: 'unknown' as OrgType,
     mission_focus: '',
     estimated_budget: '',
     estimated_size: '',
@@ -52,6 +53,7 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
           state: form.state.trim(),
           country: form.country.trim(),
           keyword_category: form.keyword_category,
+          org_type: form.org_type,
           mission_focus: form.mission_focus.trim(),
           estimated_budget: form.estimated_budget.trim(),
           estimated_size: form.estimated_size.trim(),
@@ -72,7 +74,7 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
         return;
       }
       setForm({
-        name: '', location: '', website: '', keyword_category: '',
+        name: '', location: '', website: '', keyword_category: '', org_type: 'unknown',
         mission_focus: '', estimated_budget: '', estimated_size: '',
         city: '', state: '', country: '',
         contact_name: '', contact_email: '', contact_position: '', notes: '',
@@ -163,19 +165,33 @@ export default function AddOrgModal({ isOpen, onClose, onSuccess }: AddOrgModalP
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-silver-700 mb-1">Category</label>
-            <select
-              value={form.keyword_category}
-              onChange={e => setForm(f => ({ ...f, keyword_category: e.target.value as KeywordCategory }))}
-              className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400 bg-white"
-            >
-              <option value="">Select a category...</option>
-              {KEYWORD_CATEGORIES.map(cat => (
-                <option key={cat.value} value={cat.value}>{cat.label}</option>
-              ))}
-            </select>
+          {/* Category & Type */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-silver-700 mb-1">Category</label>
+              <select
+                value={form.keyword_category}
+                onChange={e => setForm(f => ({ ...f, keyword_category: e.target.value as KeywordCategory }))}
+                className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400 bg-white"
+              >
+                <option value="">Select a category...</option>
+                {KEYWORD_CATEGORIES.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-silver-700 mb-1">Organization Type</label>
+              <select
+                value={form.org_type}
+                onChange={e => setForm(f => ({ ...f, org_type: e.target.value as OrgType }))}
+                className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400 bg-white"
+              >
+                {ORG_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Budget & Size */}

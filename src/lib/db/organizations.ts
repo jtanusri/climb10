@@ -26,8 +26,8 @@ export async function createOrg(data: Partial<Organization>): Promise<Organizati
       mission_focus, why_fit, stage, keyword_category, signal_strength,
       leadership_signal_tier, leadership_signal_evidence,
       address, city, state, zip, country,
-      lat, lng, discovery_run_id, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      lat, lng, discovery_run_id, source, org_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       data.name ?? '', data.location ?? '', data.website ?? '',
       data.estimated_size ?? '', data.estimated_budget ?? '',
@@ -38,7 +38,7 @@ export async function createOrg(data: Partial<Organization>): Promise<Organizati
       data.address ?? '', data.city ?? '', data.state ?? '',
       data.zip ?? '', data.country ?? '',
       data.lat ?? null, data.lng ?? null, data.discovery_run_id ?? null,
-      data.source ?? 'ai_discovery',
+      data.source ?? 'ai_discovery', data.org_type ?? 'unknown',
     ],
   });
 
@@ -62,6 +62,7 @@ export async function updateOrg(id: number, data: Partial<Organization>): Promis
       keyword_category = ?, signal_strength = ?,
       leadership_signal_tier = ?, leadership_signal_evidence = ?,
       address = ?, city = ?, state = ?, zip = ?, country = ?,
+      org_type = ?,
       lat = ?, lng = ?, updated_at = datetime('now')
     WHERE id = ?`,
     args: [
@@ -76,6 +77,7 @@ export async function updateOrg(id: number, data: Partial<Organization>): Promis
       data.address ?? org.address, data.city ?? org.city,
       data.state ?? org.state, data.zip ?? org.zip,
       data.country ?? org.country,
+      data.org_type ?? org.org_type ?? 'unknown',
       data.lat ?? org.lat, data.lng ?? org.lng, id,
     ],
   });

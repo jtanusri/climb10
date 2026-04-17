@@ -204,6 +204,7 @@ Return your results as a JSON array with this exact structure. Include both orga
     "mission_focus": "Brief description of their mission...",
     "why_fit": "Why this org is a fit for the advisor...",
     "keyword_category": "sector",
+    "org_type": "nonprofit",
     "signal_strength": "high",
     "leadership_signal_tier": "confirmed",
     "leadership_signal_evidence": "Specific evidence found: recently announced...",
@@ -220,7 +221,8 @@ Return your results as a JSON array with this exact structure. Include both orga
 ]
 
 FIELD NOTES:
-- keyword_category: one of "sector", "infra", "econ", "sci", "gov", "cons", "food" — which cluster best describes this org. Use "cons" for conservation/sustainability orgs. Use "food" for aquaculture, seafood supply chain, and blue food orgs.
+- keyword_category: one of "sector", "infra", "econ", "sci", "gov", "cons", "food", "donor", "investor" — which cluster best describes this org. Use "cons" for conservation/sustainability orgs. Use "food" for aquaculture/seafood/blue food orgs. Use "donor" for foundations and philanthropic funders. Use "investor" for VC firms, accelerators, and impact funds.
+- org_type: one of "nonprofit", "for_profit", "unknown" — based on verified legal/tax status. Nonprofits include 501(c)(3)s, foundations, NGOs, charities, associations, public agencies, and universities. For-profits include corporations, LLCs, startups, VC funds, and companies. Use "unknown" only if genuinely ambiguous.
 - signal_strength: one of "high", "strong", "supplemental", "careful" — how strong a lead for Leslie
 - leadership_signal_tier: one of "confirmed", "inferred", "unknown" — evidence quality for leadership challenge
 - leadership_signal_evidence: 1-3 sentences describing specific evidence or standard 'insufficient data' note

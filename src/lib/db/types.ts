@@ -66,6 +66,14 @@ export const KEYWORD_CATEGORIES: { value: KeywordCategory; label: string; color:
 
 export type OrgSource = 'ai_discovery' | 'spreadsheet_import' | 'manual';
 
+export type OrgType = 'nonprofit' | 'for_profit' | 'unknown';
+
+export const ORG_TYPES: { value: OrgType; label: string; icon: string; color: string }[] = [
+  { value: 'nonprofit', label: 'Non-Profit', icon: '/non-profit.png', color: 'bg-emerald-100 text-emerald-800' },
+  { value: 'for_profit', label: 'For-Profit', icon: '/for-profit.png', color: 'bg-blue-100 text-blue-800' },
+  { value: 'unknown', label: 'Unknown', icon: '', color: 'bg-silver-100 text-silver-600' },
+];
+
 // Signal strength for map marker sizing
 export type SignalStrength = 'high' | 'strong' | 'supplemental' | 'careful';
 
@@ -121,6 +129,7 @@ export interface Organization {
   lng: number | null;
   discovery_run_id: number | null;
   source: OrgSource;
+  org_type: OrgType;
   created_at: string;
   updated_at: string;
 }

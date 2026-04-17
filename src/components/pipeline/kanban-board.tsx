@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { useRouter } from 'next/navigation';
-import { Search, Globe, MapPin, Tag, X } from 'lucide-react';
-import { PIPELINE_STAGES, KEYWORD_CATEGORIES, type Organization, type PipelineStage, type KeywordCategory } from '@/lib/db/types';
+import { Search, Globe, MapPin, Tag, Building2, X } from 'lucide-react';
+import { PIPELINE_STAGES, KEYWORD_CATEGORIES, ORG_TYPES, type Organization, type PipelineStage, type KeywordCategory, type OrgType } from '@/lib/db/types';
 import PipelineCard from './pipeline-card';
 import AddOrgModal from './add-org-modal';
 
@@ -15,6 +15,7 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
   const [countryFilter, setCountryFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<KeywordCategory | ''>('');
+  const [typeFilter, setTypeFilter] = useState<OrgType | ''>('');
   const router = useRouter();
 
   // Extract unique countries and states
@@ -45,20 +46,22 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
       if (countryFilter && o.country !== countryFilter) return false;
       if (stateFilter && o.state !== stateFilter) return false;
       if (categoryFilter && o.keyword_category !== categoryFilter) return false;
+      if (typeFilter && (o.org_type || 'unknown') !== typeFilter) return false;
       return true;
     });
-  }, [orgs, searchQuery, countryFilter, stateFilter, categoryFilter]);
+  }, [orgs, searchQuery, countryFilter, stateFilter, categoryFilter, typeFilter]);
 
   const getOrgsByStage = (stage: PipelineStage) =>
     filteredOrgs.filter(o => o.stage === stage);
 
-  const hasActiveFilters = searchQuery || countryFilter || stateFilter || categoryFilter;
+  const hasActiveFilters = searchQuery || countryFilter || stateFilter || categoryFilter || typeFilter;
 
   const clearFilters = () => {
     setSearchQuery('');
     setCountryFilter('');
     setStateFilter('');
     setCategoryFilter('');
+    setTypeFilter('');
   };
 
   const handleDragEnd = async (result: DropResult) => {
@@ -156,6 +159,21 @@ export default function KanbanBoard({ initialOrgs }: { initialOrgs: Organization
             <option value="">All Categories</option>
             {KEYWORD_CATEGORIES.map(cat => (
               <option key={cat.value} value={cat.value}>{cat.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Org Type */}
+        <div className="relative min-w-[150px]">
+          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-400" />
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value as OrgType | '')}
+            className="w-full pl-9 pr-3 py-1.5 border border-silver-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ocean-400 bg-white appearance-none cursor-pointer"
+          >
+            <option value="">All Types</option>
+            {ORG_TYPES.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
         </div>

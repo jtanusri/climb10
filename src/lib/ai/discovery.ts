@@ -1,7 +1,7 @@
 import { getGeminiModelWithSearch } from './client';
 import { buildDiscoveryPrompt } from './prompts';
 import { createDiscoveryRun, completeDiscoveryRun, failDiscoveryRun } from '../db/discovery';
-import type { Brief, BudgetTier, KeywordCategory, SignalStrength, LeadershipSignalTier } from '../db/types';
+import type { Brief, BudgetTier, KeywordCategory, SignalStrength, LeadershipSignalTier, OrgType } from '../db/types';
 import { parseBudgetToMillions } from '../utils/budget';
 import { getBudgetTier } from '../db/types';
 
@@ -16,6 +16,7 @@ export interface DiscoveryResult {
   mission_focus: string;
   why_fit: string;
   keyword_category?: KeywordCategory | '';
+  org_type?: OrgType;
   signal_strength?: SignalStrength | '';
   leadership_signal_tier: LeadershipSignalTier;
   leadership_signal_evidence: string;

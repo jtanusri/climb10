@@ -7,8 +7,8 @@ import {
   User, FileText, Mail, Clock, Loader2, Shield, DollarSign,
 } from 'lucide-react';
 import Link from 'next/link';
-import { PIPELINE_STAGES, SIGNAL_TIER_DISPLAY, BUDGET_TIERS, getBudgetTier,
-  type Organization, type Contact, type Note, type OutreachDraft, type PipelineStage, type LeadershipSignalTier } from '@/lib/db/types';
+import { PIPELINE_STAGES, SIGNAL_TIER_DISPLAY, BUDGET_TIERS, ORG_TYPES, getBudgetTier,
+  type Organization, type Contact, type Note, type OutreachDraft, type PipelineStage, type LeadershipSignalTier, type OrgType } from '@/lib/db/types';
 import { parseBudgetToMillions } from '@/lib/utils/budget';
 
 const reviewStatusStyles: Record<string, string> = {
@@ -52,6 +52,7 @@ export default function OrgDetail({ org: initialOrg, contacts: initialContacts, 
     state: org.state || '',
     zip: org.zip || '',
     country: org.country || '',
+    org_type: (org.org_type || 'unknown') as OrgType,
   });
 
   const [showContactForm, setShowContactForm] = useState(false);
@@ -159,6 +160,17 @@ export default function OrgDetail({ org: initialOrg, contacts: initialContacts, 
 
       {/* Badges */}
       <div className="flex flex-wrap gap-2 mb-6">
+        {org.org_type && org.org_type !== 'unknown' && (() => {
+          const t = ORG_TYPES.find(x => x.value === org.org_type);
+          if (!t) return null;
+          return (
+            <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${t.color}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {t.icon && <img src={t.icon} alt="" className="w-3.5 h-3.5" />}
+              {t.label}
+            </span>
+          );
+        })()}
         {org.estimated_budget && (
           <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${budgetTierDisplay?.color || 'bg-silver-100 text-silver-600'}`}>
             <DollarSign className="w-3 h-3" /> {org.estimated_budget}
@@ -284,15 +296,27 @@ export default function OrgDetail({ org: initialOrg, contacts: initialContacts, 
               <textarea value={form.mission_focus} onChange={e => setForm(f => ({...f, mission_focus: e.target.value}))}
                 rows={3} className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-silver-700 mb-1">Leadership Signal Tier</label>
-              <select value={form.leadership_signal_tier}
-                onChange={e => setForm(f => ({...f, leadership_signal_tier: e.target.value as LeadershipSignalTier}))}
-                className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm">
-                <option value="confirmed">Confirmed</option>
-                <option value="inferred">Inferred</option>
-                <option value="unknown">Unknown</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-silver-700 mb-1">Organization Type</label>
+                <select value={form.org_type}
+                  onChange={e => setForm(f => ({...f, org_type: e.target.value as OrgType}))}
+                  className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm">
+                  {ORG_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-silver-700 mb-1">Leadership Signal Tier</label>
+                <select value={form.leadership_signal_tier}
+                  onChange={e => setForm(f => ({...f, leadership_signal_tier: e.target.value as LeadershipSignalTier}))}
+                  className="w-full px-3 py-2 border border-silver-300 rounded-lg text-sm">
+                  <option value="confirmed">Confirmed</option>
+                  <option value="inferred">Inferred</option>
+                  <option value="unknown">Unknown</option>
+                </select>
+              </div>
             </div>
 
             <div className="flex justify-between pt-4 border-t border-silver-200">

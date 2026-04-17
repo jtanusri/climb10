@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { MapPin, DollarSign, Shield } from 'lucide-react';
 import type { Organization } from '@/lib/db/types';
-import { SIGNAL_TIER_DISPLAY, KEYWORD_CATEGORIES, BUDGET_TIERS, getBudgetTier } from '@/lib/db/types';
+import { SIGNAL_TIER_DISPLAY, KEYWORD_CATEGORIES, ORG_TYPES, BUDGET_TIERS, getBudgetTier } from '@/lib/db/types';
 import { parseBudgetToMillions } from '@/lib/utils/budget';
 
 export default function PipelineCard({ org }: { org: Organization }) {
@@ -12,6 +12,7 @@ export default function PipelineCard({ org }: { org: Organization }) {
   const budgetTierDisplay = BUDGET_TIERS.find(t => t.value === budgetTier);
   const signalDisplay = SIGNAL_TIER_DISPLAY[org.leadership_signal_tier || 'unknown'];
   const categoryDisplay = KEYWORD_CATEGORIES.find(c => c.value === org.keyword_category);
+  const orgTypeDisplay = ORG_TYPES.find(t => t.value === (org.org_type || 'unknown'));
 
   return (
     <Link href={`/pipeline/${org.id}`}>
@@ -23,7 +24,11 @@ export default function PipelineCard({ org }: { org: Organization }) {
             {[org.address, org.city, org.state, org.zip, org.country].filter(Boolean).join(', ') || org.location}
           </p>
         )}
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {orgTypeDisplay && orgTypeDisplay.value !== 'unknown' && orgTypeDisplay.icon && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={orgTypeDisplay.icon} alt={orgTypeDisplay.label} title={orgTypeDisplay.label} className="w-4 h-4" />
+          )}
           {categoryDisplay && (
             <span
               className="text-[10px] px-1.5 py-0.5 rounded-full font-medium text-white"

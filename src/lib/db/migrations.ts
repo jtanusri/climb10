@@ -58,6 +58,7 @@ export async function runMigrations(db: Client) {
       discovery_run_id INTEGER,
       notes TEXT DEFAULT '',
       source TEXT DEFAULT 'ai_discovery',
+      org_type TEXT DEFAULT 'unknown',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (discovery_run_id) REFERENCES discovery_runs(id)
@@ -133,7 +134,7 @@ export async function runMigrations(db: Client) {
   ], 'write');
 
   // Seed initial allowed users (idempotent)
-  for (const email of ['jtanusri@gmail.com', 'leslie@lesliebenson.com']) {
+  for (const email of ['jtanusri@gmail.com', 'leslie@lesliebenson.com', 'leslie@climb10.com', 'msgiro@gmail.com', 'mahesh@nuff.cash']) {
     try {
       await db.execute({ sql: 'INSERT OR IGNORE INTO allowed_users (email) VALUES (?)', args: [email] });
     } catch { /* already exists */ }
@@ -160,4 +161,8 @@ export async function runMigrations(db: Client) {
       await db.execute(`ALTER TABLE organizations ADD COLUMN ${col} TEXT DEFAULT ''`);
     } catch { /* already exists */ }
   }
+  // Add org_type column (nonprofit / for_profit / unknown)
+  try {
+    await db.execute(`ALTER TABLE organizations ADD COLUMN org_type TEXT DEFAULT 'unknown'`);
+  } catch { /* already exists */ }
 }

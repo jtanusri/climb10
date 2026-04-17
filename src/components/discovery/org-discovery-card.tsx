@@ -17,6 +17,7 @@ interface DiscoveryResult {
   mission_focus: string;
   why_fit: string;
   keyword_category?: string;
+  org_type?: string;
   signal_strength?: string;
   leadership_signal_tier: LeadershipSignalTier;
   leadership_signal_evidence: string;
@@ -65,6 +66,7 @@ export default function OrgDiscoveryCard({ org }: { org: DiscoveryResult }) {
           why_fit: org.why_fit,
           stage: 'identified',
           keyword_category: org.keyword_category || '',
+          org_type: org.org_type || 'unknown',
           signal_strength: org.signal_strength || '',
           leadership_signal_tier: org.leadership_signal_tier || 'unknown',
           leadership_signal_evidence: org.leadership_signal_evidence || '',

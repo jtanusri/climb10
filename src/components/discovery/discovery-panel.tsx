@@ -19,6 +19,7 @@ interface DiscoveryResult {
   mission_focus: string;
   why_fit: string;
   keyword_category?: string;
+  org_type?: string;
   signal_strength?: string;
   leadership_signal_tier: LeadershipSignalTier;
   leadership_signal_evidence: string;
