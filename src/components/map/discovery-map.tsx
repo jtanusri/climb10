@@ -4,8 +4,8 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { MapPin } from 'lucide-react';
-import { KEYWORD_CATEGORIES, SIGNAL_STRENGTHS } from '@/lib/db/types';
-import type { KeywordCategory, SignalStrength } from '@/lib/db/types';
+import { KEYWORD_CATEGORIES, SIGNAL_STRENGTHS, ORG_TYPES } from '@/lib/db/types';
+import type { KeywordCategory, SignalStrength, OrgType } from '@/lib/db/types';
 
 const LeafletMap = dynamic(() => import('./leaflet-map'), {
   ssr: false,
@@ -26,6 +26,7 @@ interface MapOrg {
   keyword_category: string;
   signal_strength: string;
   leadership_signal_tier: string;
+  org_type?: string;
   lat: number;
   lng: number;
 }
@@ -59,13 +60,32 @@ function getCategoryColor(cat: string): string {
 }
 
 export default function DiscoveryMap({ orgs, fullPage = false }: { orgs: MapOrg[]; fullPage?: boolean }) {
-  const [catFilter, setCatFilter] = useState<KeywordCategory | 'all'>('all');
+  // Multi-select: empty set = all categories shown
+  const [catFilters, setCatFilters] = useState<Set<KeywordCategory>>(new Set());
   const [sigFilter, setSigFilter] = useState<SignalStrength | 'all'>('all');
+  const [typeFilters, setTypeFilters] = useState<Set<OrgType>>(new Set());
   const [showRadius, setShowRadius] = useState(true);
 
+  const toggleCat = (cat: KeywordCategory) => {
+    setCatFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  const toggleType = (t: OrgType) => {
+    setTypeFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t); else next.add(t);
+      return next;
+    });
+  };
+
   const filteredOrgs = orgs.filter(o => {
-    if (catFilter !== 'all' && o.keyword_category !== catFilter) return false;
+    if (catFilters.size > 0 && !catFilters.has(o.keyword_category as KeywordCategory)) return false;
     if (sigFilter !== 'all' && o.signal_strength !== sigFilter) return false;
+    if (typeFilters.size > 0 && !typeFilters.has((o.org_type || 'unknown') as OrgType)) return false;
     return true;
   });
 
@@ -88,26 +108,53 @@ export default function DiscoveryMap({ orgs, fullPage = false }: { orgs: MapOrg[
           </button>
         </div>
 
-        {/* Category filters — top-left overlay, horizontal */}
-        <div className="absolute top-3 left-12 z-[1000] flex items-center gap-1.5">
+        {/* Category filters — top-left overlay, horizontal (multi-select) */}
+        <div className="absolute top-3 left-12 z-[1000] flex items-center gap-1.5 flex-wrap max-w-[calc(100%-280px)]">
           {KEYWORD_CATEGORIES.map(cat => {
-            const isActive = catFilter === cat.value;
+            const isActive = catFilters.has(cat.value);
             const iconSrc = isActive ? CATEGORY_SELECTED_ICON_PATHS[cat.value] : CATEGORY_ICON_PATHS[cat.value];
+            const hasAnyActive = catFilters.size > 0;
             return (
               <button
                 key={cat.value}
-                onClick={() => setCatFilter(isActive ? 'all' : cat.value)}
+                onClick={() => toggleCat(cat.value)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all shadow-md ${
                   isActive
                     ? 'text-white'
-                    : catFilter !== 'all'
+                    : hasAnyActive
                       ? 'bg-white/70 text-silver-400 hover:bg-white hover:text-silver-600'
                       : 'bg-white text-silver-700 hover:bg-silver-50'
                 }`}
                 style={isActive ? { backgroundColor: cat.color } : {}}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 {iconSrc && <img src={iconSrc} alt="" className="w-4 h-4 object-contain" />}
                 {cat.label.split(' ')[0]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Org type filters — bottom-left overlay (multi-select) */}
+        <div className="absolute bottom-12 left-3 z-[1000] flex items-center gap-1.5">
+          {ORG_TYPES.filter(t => t.value !== 'unknown').map(t => {
+            const isActive = typeFilters.has(t.value);
+            const hasAnyActive = typeFilters.size > 0;
+            return (
+              <button
+                key={t.value}
+                onClick={() => toggleType(t.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all shadow-md ${
+                  isActive
+                    ? 'bg-plum-700 text-white'
+                    : hasAnyActive
+                      ? 'bg-white/70 text-silver-400 hover:bg-white hover:text-silver-600'
+                      : 'bg-white text-silver-700 hover:bg-silver-50'
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {t.icon && <img src={t.icon} alt="" className="w-4 h-4 object-contain" />}
+                {t.label}
               </button>
             );
           })}

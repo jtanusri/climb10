@@ -33,6 +33,7 @@ export default async function MapPage() {
         keyword_category: o.keyword_category || 'sector',
         signal_strength: o.signal_strength || 'strong',
         leadership_signal_tier: o.leadership_signal_tier,
+        org_type: o.org_type || 'unknown',
         lat: o.lat! + offset[0],
         lng: o.lng! + offset[1],
       };
