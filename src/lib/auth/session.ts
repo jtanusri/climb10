@@ -1,7 +1,8 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import type { NextResponse } from 'next/server';
 
-const SESSION_COOKIE = 'session';
+export const SESSION_COOKIE = 'session';
 const SESSION_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
 
 function getSecret() {
@@ -33,6 +34,23 @@ export async function createSession(email: string) {
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    expires: expiresAt,
+  });
+}
+
+/**
+ * Set the session cookie directly on a NextResponse.
+ * Use this when returning a redirect, since cookies() set on the outgoing
+ * cookie store don't reliably attach to NextResponse.redirect() objects.
+ */
+export async function setSessionCookieOnResponse(response: NextResponse, email: string) {
+  const expiresAt = new Date(Date.now() + SESSION_DURATION * 1000);
+  const token = await encrypt({ email, expiresAt });
+  response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
