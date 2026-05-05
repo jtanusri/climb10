@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const PUBLIC_PATHS = ['/login', '/api/auth/'];
+const PUBLIC_PATHS = ['/login', '/api/auth/', '/.netlify/functions/'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -32,7 +32,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all paths except static assets, images, and favicon
-    '/((?!_next/static|_next/image|favicon.ico|logo.png|.*\\.png$|.*\\.svg$).*)',
+    // Match all paths except static assets, images, favicon, and Netlify functions
+    '/((?!_next/static|_next/image|\\.netlify/|favicon.ico|logo.png|.*\\.png$|.*\\.svg$).*)',
   ],
 };
