@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Loader2, AlertCircle, ChevronDown, ChevronUp, MapPin, Filter, User, Mail, Linkedin, ExternalLink, Shield, DollarSign, FileText, CheckCircle } from 'lucide-react';
-import Link from 'next/link';
+import { Search, Loader2, AlertCircle, ChevronDown, ChevronUp, MapPin, Filter, CheckCircle } from 'lucide-react';
 import OrgDiscoveryCard from './org-discovery-card';
 import type { Brief, DiscoveryRun, LeadershipSignalTier } from '@/lib/db/types';
-import { SIGNAL_TIER_DISPLAY, BUDGET_TIERS, getBudgetTier } from '@/lib/db/types';
-import { parseBudgetToMillions } from '@/lib/utils/budget';
-import type { PipelineLead } from '../brief/brief-hub';
+import { SIGNAL_TIER_DISPLAY } from '@/lib/db/types';
 
 // Inline discovery result type to avoid importing server-side code
 interface DiscoveryResult {
@@ -35,30 +32,12 @@ interface DiscoveryResult {
   [key: string]: unknown;
 }
 
-const reviewStatusStyles: Record<string, string> = {
-  'Lead for Business': 'bg-green-50 text-green-700 border-green-200',
-  'Lead for Review': 'bg-blue-50 text-blue-700 border-blue-200',
-  'Pending Review': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  'Do NOT Contact': 'bg-red-50 text-red-700 border-red-200',
-};
-
-const stageLabels: Record<string, string> = {
-  identified: 'Identified',
-  outreach_pending: 'Outreach Pending',
-  outreach_sent: 'Outreach Sent',
-  conversation_started: 'Conversation Started',
-  meeting_scheduled: 'Meeting Scheduled',
-  residency_placed: 'Residency Placed',
-  not_a_fit: 'Not a Fit',
-};
-
 interface Props {
   initialBrief: Brief | null;
   pastRuns: DiscoveryRun[];
-  pipelineLeads?: PipelineLead[];
 }
 
-export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads = [] }: Props) {
+export default function DiscoveryPanel({ initialBrief, pastRuns }: Props) {
   const [geography, setGeography] = useState(initialBrief?.geography || 'Halifax, Nova Scotia');
   const [radiusMiles, setRadiusMiles] = useState(initialBrief?.radius_miles || 15);
   const [query, setQuery] = useState('');
@@ -159,10 +138,6 @@ export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads =
     ? results
     : results.filter(r => r.leadership_signal_tier === tierFilter);
 
-  const filteredLeads = tierFilter === 'all'
-    ? pipelineLeads
-    : pipelineLeads.filter(l => l.leadership_signal_tier === tierFilter);
-
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Search Controls — unified top bar */}
@@ -237,8 +212,8 @@ export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads =
         </div>
       </div>
 
-      {/* Signal Tier Filter (shared between AI results and pipeline leads) */}
-      {(pipelineLeads.length > 0 || results.length > 0) && (
+      {/* Signal Tier Filter for AI results */}
+      {results.length > 0 && (
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-silver-400" />
           <span className="text-sm text-silver-600">Filter by signal:</span>
@@ -300,123 +275,6 @@ export default function DiscoveryPanel({ initialBrief, pastRuns, pipelineLeads =
             {filteredResults.map((org, i) => (
               <OrgDiscoveryCard key={i} org={org} />
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Pipeline Leads for Review */}
-      {filteredLeads.length > 0 && (
-        <div>
-          <h3 className="font-semibold text-silver-900 mb-4">
-            Leads for Review — {filteredLeads.length} organization{filteredLeads.length !== 1 ? 's' : ''} in pipeline
-          </h3>
-          <div className="space-y-3">
-            {filteredLeads.map(lead => {
-              const budgetM = parseBudgetToMillions(lead.estimated_budget);
-              const budgetTier = getBudgetTier(budgetM);
-              const budgetTierDisplay = BUDGET_TIERS.find(t => t.value === budgetTier);
-              const signalDisplay = SIGNAL_TIER_DISPLAY[lead.leadership_signal_tier as LeadershipSignalTier] || SIGNAL_TIER_DISPLAY.unknown;
-
-              return (
-                <div key={lead.id} className="bg-white rounded-xl border border-silver-200 p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <Link href={`/pipeline/${lead.id}`} className="font-semibold text-silver-900 text-lg hover:text-plum-700">
-                        {lead.name}
-                      </Link>
-                      <div className="flex items-center gap-2 mt-1 text-sm text-silver-500">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {lead.location}
-                        {lead.website && (
-                          <a href={lead.website} target="_blank" rel="noopener noreferrer" className="text-ocean-500 hover:text-ocean-700">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-silver-100 text-silver-600 font-medium">
-                      {stageLabels[lead.stage] || lead.stage}
-                    </span>
-                  </div>
-
-                  {/* Badges */}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {lead.estimated_budget && (
-                      <span className={`inline-flex items-center gap-0.5 text-xs px-2.5 py-1 rounded-full font-medium ${budgetTierDisplay?.color || 'bg-silver-100 text-silver-600'}`}>
-                        <DollarSign className="w-3 h-3" />
-                        {lead.estimated_budget}
-                      </span>
-                    )}
-                    {lead.estimated_size && (
-                      <span className="text-xs px-2.5 py-1 rounded-full bg-silver-100 text-silver-600">
-                        ~{lead.estimated_size} people
-                      </span>
-                    )}
-                    <span className={`inline-flex items-center gap-0.5 text-xs px-2.5 py-1 rounded-full font-medium ${signalDisplay.color}`}>
-                      <Shield className="w-3 h-3" />
-                      {signalDisplay.label}
-                    </span>
-                  </div>
-
-                  {/* Mission & Fit */}
-                  <p className="text-sm text-silver-700 mb-2">{lead.mission_focus}</p>
-                  {lead.why_fit && (
-                    <div className="bg-plum-50 rounded-lg p-3 mb-3">
-                      <p className="text-xs font-medium text-plum-800 mb-1">Why This is a Fit</p>
-                      <p className="text-sm text-plum-700">{lead.why_fit}</p>
-                    </div>
-                  )}
-
-                  {/* Lead Contact Details */}
-                  {lead.contact_name && (
-                    <div className="border border-silver-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-medium text-silver-500 uppercase tracking-wide">Lead Contact</p>
-                        {lead.review_status && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${reviewStatusStyles[lead.review_status] || 'bg-silver-50 text-silver-600 border-silver-200'}`}>
-                            {lead.review_status}
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-silver-400" />
-                          <span className="text-sm font-medium text-silver-900">{lead.contact_name}</span>
-                          {lead.contact_position && (
-                            <span className="text-xs text-silver-500">· {lead.contact_position}</span>
-                          )}
-                        </div>
-                        {lead.contact_email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-silver-400" />
-                            <a href={`mailto:${lead.contact_email}`} className="text-sm text-ocean-600 hover:underline">{lead.contact_email}</a>
-                          </div>
-                        )}
-                        {lead.contact_linkedin && (
-                          <div className="flex items-center gap-2">
-                            <Linkedin className="w-4 h-4 text-silver-400" />
-                            <a href={lead.contact_linkedin} target="_blank" rel="noopener noreferrer" className="text-sm text-ocean-600 hover:underline">
-                              {lead.contact_linkedin.replace('https://linkedin.com/in/', '').replace('https://www.linkedin.com/in/', '')}
-                            </a>
-                          </div>
-                        )}
-                        {lead.contact_bio && (
-                          <p className="text-xs text-silver-600 mt-1">{lead.contact_bio}</p>
-                        )}
-                      </div>
-                      {lead.host_producer_notes && (
-                        <div className="mt-2 pt-2 border-t border-silver-100">
-                          <div className="flex items-start gap-1.5">
-                            <FileText className="w-3 h-3 text-silver-400 mt-0.5" />
-                            <p className="text-xs text-silver-600 italic">{lead.host_producer_notes}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
