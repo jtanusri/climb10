@@ -223,22 +223,65 @@ export default async function handler(req: Request, _context: Context) {
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
       tools: [{ googleSearch: {} } as never],
+      generationConfig: {
+        maxOutputTokens: 65536,
+      },
     });
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     console.log(`[bg-discovery] Gemini returned ${responseText.length} chars`);
 
-    // Parse results
+    // Parse results — multi-strategy with recovery for truncated/malformed JSON
     let results: Record<string, unknown>[] = [];
+    const cleaned = responseText.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+
+    // Strategy 1: Direct parse (most common case)
     try {
-      const cleaned = responseText.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
-      const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        results = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) results = parsed;
+    } catch { /* fall through */ }
+
+    // Strategy 2: Greedy bracket match
+    if (results.length === 0) {
+      try {
+        const m = cleaned.match(/\[[\s\S]*\]/);
+        if (m) results = JSON.parse(m[0]);
+      } catch { /* fall through */ }
+    }
+
+    // Strategy 3: Recover individual objects by walking through the text
+    // (handles truncated responses where the closing ] is missing or last
+    // object is incomplete)
+    if (results.length === 0) {
+      console.warn("[bg-discovery] Initial parse failed, attempting object-by-object recovery");
+      const recovered: Record<string, unknown>[] = [];
+      let depth = 0;
+      let start = -1;
+      for (let i = 0; i < cleaned.length; i++) {
+        const ch = cleaned[i];
+        if (ch === "{") {
+          if (depth === 0) start = i;
+          depth++;
+        } else if (ch === "}") {
+          depth--;
+          if (depth === 0 && start !== -1) {
+            const objStr = cleaned.substring(start, i + 1);
+            try {
+              const obj = JSON.parse(objStr);
+              if (obj && typeof obj === "object" && obj.name) recovered.push(obj);
+            } catch { /* skip malformed object */ }
+            start = -1;
+          }
+        }
       }
-    } catch {
-      console.error("[bg-discovery] Failed to parse:", responseText.substring(0, 200));
+      results = recovered;
+      console.log(`[bg-discovery] Recovered ${results.length} objects from malformed response`);
+    }
+
+    if (results.length === 0) {
+      console.error("[bg-discovery] All parse strategies failed. First 300 chars:", cleaned.substring(0, 300));
+      console.error("[bg-discovery] Last 300 chars:", cleaned.substring(cleaned.length - 300));
     }
 
     results = filterAndEnrichResults(results);
